@@ -46,6 +46,45 @@
       }
     }
 
+    /* Texto vertical de abajo hacia arriba en encabezados de columnas */
+    .vertical-header-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 112px;
+      padding: 4px 2px;
+      margin: 0 auto;
+    }
+
+    .vertical-header-text {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      text-align: left;
+      white-space: nowrap;
+      height: 92px;
+      width: 24px;
+      line-height: 24px;
+      overflow: visible;
+    }
+
+    .vertical-date-input {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      text-align: center;
+      white-space: nowrap;
+      height: 54px;
+      width: 22px;
+      line-height: 22px;
+    }
+
+    @media (max-width: 767px) {
+      .vertical-header-text,
+      .vertical-date-input {
+        font-size: 11px !important;
+      }
+    }
+
     /* Scrollbars estilizados */
     .sheet-scroll {
       -webkit-overflow-scrolling: touch;
@@ -131,6 +170,12 @@
         border: 1px solid #94a3b8 !important;
         padding: 3px 4px !important;
       }
+      .vertical-header-wrap {
+        height: 98px !important;
+      }
+      .vertical-header-text {
+        height: 82px !important;
+      }
       .print-page-break {
         page-break-before: always;
       }
@@ -161,9 +206,6 @@
         <!-- Identidad Institucional Editable + Switch de Materia -->
         <div class="flex items-center justify-between sm:justify-start gap-2.5 min-w-0">
           <div class="flex items-center gap-2.5 min-w-0 flex-1">
-            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center font-black text-base sm:text-lg shadow-inner shrink-0">
-              H
-            </div>
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <!-- Título Institucional Editable -->
@@ -174,7 +216,7 @@
                     value="Colegio Evangélico Horeb"
                     aria-label="Editar nombre de la institución"
                     title="Haz clic para editar el nombre de la institución"
-                    class="bg-slate-800/70 hover:bg-slate-800 focus:bg-slate-800 text-sm sm:text-base md:text-lg font-extrabold text-white border border-dashed border-slate-600 hover:border-emerald-400 focus:border-solid focus:border-emerald-400 rounded-lg pl-2.5 pr-7 py-0.5 focus:outline-none w-56 sm:w-68 md:w-76 transition"
+                    class="bg-slate-800/70 hover:bg-slate-800 focus:bg-slate-800 text-sm sm:text-base md:text-lg font-extrabold text-white border border-dashed border-slate-600 hover:border-emerald-400 focus:border-solid focus:border-emerald-400 rounded-lg pl-2.5 pr-7 py-0.5 focus:outline-none w-64 sm:w-72 md:w-80 transition"
                   />
                   <span class="pointer-events-none absolute right-2 text-[11px] text-slate-400 group-hover:text-emerald-300" title="Editable">✏️</span>
                 </div>
@@ -387,25 +429,10 @@
         <button type="button" onclick="closePrintModal()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">✕</button>
       </div>
       <p class="text-xs text-slate-600">
-        Configurado en formato horizontal limpio con encabezado de <strong id="printModalInstName">Colegio Evangélico Horeb</strong> y espacio para firma y sello de dirección (compatible con iPad, iPhone y PC).
+        Elige exactamente qué cuadro deseas imprimir en su propia página limpia con encabezado de <strong id="printModalInstName">Colegio Evangélico Horeb</strong> y espacio para firmas.
       </p>
-      <div class="space-y-2">
-        <button
-          type="button"
-          onclick="executePrint('current')"
-          class="w-full p-3 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-left transition"
-        >
-          <div class="text-xs font-extrabold text-emerald-900">📄 Imprimir Pestaña Actual</div>
-          <div class="text-[11px] text-emerald-700">Imprime exactamente la hoja que estás viendo ahora mismo.</div>
-        </button>
-        <button
-          type="button"
-          onclick="executePrint('dossier')"
-          class="w-full p-3 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-left transition"
-        >
-          <div class="text-xs font-extrabold text-slate-900">📚 Imprimir Dossier Completo del Curso</div>
-          <div class="text-[11px] text-slate-600">Incluye Nómina, 1°, 2° y 3° Trimestre (Notas y Asistencia) y Consolidado Anual.</div>
-        </button>
+      <div id="printModalOptions" class="space-y-2">
+        <!-- Opciones generadas dinámicamente según la pestaña activa -->
       </div>
       <div class="flex justify-end">
         <button type="button" onclick="closePrintModal()" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">
@@ -627,13 +654,24 @@
      * ESTRUCTURAS DE DATOS POR CURSO Y TRIMESTRE
      * ============================================================================
      */
-    function createEmptyTrimesterData() {
+    function createEmptyTrimesterData(trimKey = 't1') {
       const maxTotalSessions = MAX_WEEKS * SESSIONS_PER_WEEK;
+      const tName = TRIM_NAMES[trimKey] || 'Trimestre';
       return {
         dateStart: '',
         dateEnd: '',
         weekCount: DEFAULT_WEEKS,
         sessionDates: Array(maxTotalSessions).fill(''),
+        customTexts: {
+          c1Title: `📊 Cuadro 1 — Registro Principal de Calificaciones · ${tName}`,
+          c1Sub: 'Notas redondeadas a enteros · SER: Asistencia, Responsabilidad (Tareas), Dedicación (Exámenes) y Respeto.',
+          c2Title: `👨‍👩‍👧 Cuadro 2 — Seguimiento de Tareas y Exámenes para Padres · ${tName}`,
+          c2Sub: 'Reflejo automático del Cuadro 1 listo para compartir con padres de familia.',
+          c3Title: `📈 Cuadro 3 — Reporte Pedagógico Automático · ${tName}`,
+          c3Sub: 'Diagnóstico trimestral automático y resumen de aprovechamiento del curso.',
+          asistTitle: `📅 Control de Asistencia — ${tName}`,
+          asistSub: 'Haz clic en cada casilla para alternar A (Puntual), T (Tarde >10 min), L (Licencia) o F (Falta). Traduce automáticamente al 1–10 en el SER.'
+        },
         serLabels: [
           'Asistencia',
           'Responsabilidad',
@@ -661,11 +699,17 @@
         key: `${subject}__${course}`,
         subject,
         course,
+        sheetTitles: {
+          nominaTitle: `📋 Nómina Oficial de Estudiantes — ${subject} (${course})`,
+          nominaSub: 'Los nombres y celulares registrados aquí se sincronizan automáticamente en los 3 trimestres y en el Consolidado Anual.',
+          anualTitle: `🏆 Consolidado Final Anual — ${subject} (${course})`,
+          anualSub: 'Nota Anual = Promedio redondeado de los 3 trimestres sobre 100 puntos (Nota mínima de aprobación anual: 51 puntos).'
+        },
         students,
         trimesters: {
-          t1: createEmptyTrimesterData(),
-          t2: createEmptyTrimesterData(),
-          t3: createEmptyTrimesterData()
+          t1: createEmptyTrimesterData('t1'),
+          t2: createEmptyTrimesterData('t2'),
+          t3: createEmptyTrimesterData('t3')
         }
       };
 
@@ -680,6 +724,18 @@
 
     function ensureStudentTrimRecords(tData, uid) {
       const maxTotalSessions = MAX_WEEKS * SESSIONS_PER_WEEK;
+      if (!tData.customTexts) {
+        tData.customTexts = {
+          c1Title: '📊 Cuadro 1 — Registro Principal de Calificaciones',
+          c1Sub: 'Notas redondeadas a enteros · SER: Asistencia, Responsabilidad (Tareas), Dedicación (Exámenes) y Respeto.',
+          c2Title: '👨‍👩‍👧 Cuadro 2 — Seguimiento de Tareas y Exámenes para Padres',
+          c2Sub: 'Reflejo automático del Cuadro 1 listo para compartir con padres de familia.',
+          c3Title: '📈 Cuadro 3 — Reporte Pedagógico Automático',
+          c3Sub: 'Diagnóstico trimestral automático y resumen de aprovechamiento del curso.',
+          asistTitle: '📅 Control de Asistencia',
+          asistSub: 'Haz clic en cada casilla para alternar A (Puntual), T (Tarde >10 min), L (Licencia) o F (Falta). Traduce automáticamente al 1–10 en el SER.'
+        };
+      }
       if (!tData.weekCount || tData.weekCount < MIN_WEEKS) {
         tData.weekCount = DEFAULT_WEEKS;
       }
@@ -774,13 +830,21 @@
     }
 
     function normalizeCourseData(cData) {
+      if (!cData.sheetTitles) {
+        cData.sheetTitles = {
+          nominaTitle: `📋 Nómina Oficial de Estudiantes — ${cData.subject} (${cData.course})`,
+          nominaSub: 'Los nombres y celulares registrados aquí se sincronizan automáticamente en los 3 trimestres y en el Consolidado Anual.',
+          anualTitle: `🏆 Consolidado Final Anual — ${cData.subject} (${cData.course})`,
+          anualSub: 'Nota Anual = Promedio redondeado de los 3 trimestres sobre 100 puntos (Nota mínima de aprobación anual: 51 puntos).'
+        };
+      }
       if (Array.isArray(cData.students)) {
         cData.students.forEach(st => {
           if (typeof st.parentPhone === 'undefined') st.parentPhone = '';
         });
       }
       ['t1', 't2', 't3'].forEach(tk => {
-        if (!cData.trimesters[tk]) cData.trimesters[tk] = createEmptyTrimesterData();
+        if (!cData.trimesters[tk]) cData.trimesters[tk] = createEmptyTrimesterData(tk);
         cData.students.forEach(st => ensureStudentTrimRecords(cData.trimesters[tk], st.uid));
       });
     }
@@ -863,38 +927,40 @@
       const g = tData.gradesByUid[uid];
       const att = calculateAttendanceStats(tData, uid);
 
-      // 1. SABER (sobre 45 pts) — Redondeado entero
-      let saberSum = 0, saberCount = 0;
-      for (let i = 0; i < tData.examCount; i++) {
+      // 1. SABER (sobre 45 pts) — Siempre promedia entre el total de exámenes configurados (vacíos = 0)
+      let saberSum = 0, saberFilledCount = 0;
+      const totalExams = Math.max(1, tData.examCount || 1);
+      for (let i = 0; i < totalExams; i++) {
         const val = parseFloat(g.exams[i]);
         if (!isNaN(val) && g.exams[i] !== '') {
           const clamped = Math.round(Math.min(45, Math.max(0, val)));
           saberSum += clamped;
-          saberCount++;
+          saberFilledCount++;
         }
       }
-      const saberScore = saberCount > 0 ? Math.round(saberSum / saberCount) : 0;
+      const saberScore = saberFilledCount > 0 ? Math.round(saberSum / totalExams) : 0;
 
-      // 2. HACER (sobre 40 pts) — Redondeado entero
-      let hacerSum = 0, hacerCount = 0;
-      for (let i = 0; i < tData.taskCount; i++) {
+      // 2. HACER (sobre 40 pts) — Siempre promedia entre el total de actividades configuradas (vacías = 0)
+      let hacerSum = 0, hacerFilledCount = 0;
+      const totalTasks = Math.max(1, tData.taskCount || 1);
+      for (let i = 0; i < totalTasks; i++) {
         const val = parseFloat(g.tasks[i]);
         if (!isNaN(val) && g.tasks[i] !== '') {
           const clamped = Math.round(Math.min(40, Math.max(0, val)));
           hacerSum += clamped;
-          hacerCount++;
+          hacerFilledCount++;
         }
       }
-      const hacerScore = hacerCount > 0 ? Math.round(hacerSum / hacerCount) : 0;
+      const hacerScore = hacerFilledCount > 0 ? Math.round(hacerSum / totalTasks) : 0;
 
-      // 3. SER (4 columnas sobre 10 pts) — Redondeado entero
+      // 3. SER (4 columnas sobre 10 pts) — Promedia entre las 4 columnas del SER (vacías = 0)
       const ser1Val = g.serManualOverride[0]
         ? (g.ser[0] !== '' ? Math.round(Number(g.ser[0])) : '')
         : (att.ser1Scale10 !== '' ? att.ser1Scale10 : (g.ser[0] !== '' ? Math.round(Number(g.ser[0])) : ''));
 
       let autoSer2 = '';
-      if (hacerCount > 0) {
-        const avgTask40 = hacerSum / hacerCount;
+      if (hacerFilledCount > 0) {
+        const avgTask40 = hacerSum / totalTasks;
         autoSer2 = Math.min(10, Math.max(1, Math.round((avgTask40 / 40) * 10)));
       }
       const ser2Val = g.serManualOverride[1]
@@ -902,8 +968,8 @@
         : (autoSer2 !== '' ? autoSer2 : (g.ser[1] !== '' ? Math.round(Number(g.ser[1])) : ''));
 
       let autoSer3 = '';
-      if (saberCount > 0) {
-        const avgExam45 = saberSum / saberCount;
+      if (saberFilledCount > 0) {
+        const avgExam45 = saberSum / totalExams;
         autoSer3 = Math.min(10, Math.max(1, Math.round((avgExam45 / 45) * 10)));
       }
       const ser3Val = g.serManualOverride[2]
@@ -915,21 +981,21 @@
         : '';
 
       const serEffectiveValues = [ser1Val, ser2Val, ser3Val, ser4Val];
-      let serSum = 0, serCount = 0;
+      let serSum = 0, serFilledCount = 0;
       serEffectiveValues.forEach(v => {
         const num = parseFloat(v);
         if (!isNaN(num) && v !== '' && v !== null && v !== undefined) {
           serSum += Math.round(Math.min(10, Math.max(0, num)));
-          serCount++;
+          serFilledCount++;
         }
       });
-      const serScore = serCount > 0 ? Math.round(serSum / serCount) : 0;
+      const serScore = serFilledCount > 0 ? Math.round(serSum / SER_COLUMNS) : 0;
 
       // 4. AUTOEVALUACIÓN (sobre 5 pts) — Redondeado entero
       const autoRaw = parseFloat(g.autoEval);
       const autoScore = (!isNaN(autoRaw) && g.autoEval !== '') ? Math.round(Math.min(5, Math.max(0, autoRaw))) : 0;
 
-      const hasAnyData = serCount > 0 || saberCount > 0 || hacerCount > 0 || (!isNaN(autoRaw) && g.autoEval !== '');
+      const hasAnyData = serFilledCount > 0 || saberFilledCount > 0 || hacerFilledCount > 0 || (!isNaN(autoRaw) && g.autoEval !== '');
       const exactTotal = serScore + saberScore + hacerScore + autoScore;
       const finalScore = hasAnyData ? Math.min(100, Math.round(exactTotal)) : 0;
 
@@ -1124,7 +1190,7 @@
               <span class="text-[11px] font-extrabold text-sky-900">Saber:</span>
               <button type="button" onclick="changeExamCount(-1)" class="w-6 h-6 rounded-lg bg-white border border-sky-300 text-sky-900 font-bold hover:bg-sky-100">−</button>
               <span class="text-xs font-black text-sky-950 w-5 text-center">${tData.examCount}</span>
-              <button type="button" onclick="changeExamCount(1)" class="w-6 h-6 rounded-lg bg-sky-600 text-white font-bold hover:bg-sky-500">+ Ex.</button>
+              <button type="button" onclick="changeExamCount(1)" class="w-6 h-6 rounded-lg bg-sky-600 text-white font-bold hover:bg-sky-500">+</button>
               <button type="button" onclick="setExamCount(10)" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-200 text-sky-900 hover:bg-sky-300" title="Mostrar los 10 exámenes">10</button>
             </div>
 
@@ -1133,7 +1199,7 @@
               <span class="text-[11px] font-extrabold text-amber-900">Hacer:</span>
               <button type="button" onclick="changeTaskCount(-1)" class="w-6 h-6 rounded-lg bg-white border border-amber-300 text-amber-900 font-bold hover:bg-amber-100">−</button>
               <span class="text-xs font-black text-amber-950 w-5 text-center">${tData.taskCount}</span>
-              <button type="button" onclick="changeTaskCount(1)" class="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400">+ Act.</button>
+              <button type="button" onclick="changeTaskCount(1)" class="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400">+</button>
               <button type="button" onclick="setTaskCount(20)" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 hover:bg-amber-300" title="Mostrar las 20 actividades">20</button>
             </div>
           </div>
@@ -1246,19 +1312,17 @@
     function renderNominaView() {
       const filtered = getFilteredStudents();
       const useCards = isMobileCardLayout();
+      const sTitles = app.courseData.sheetTitles;
 
       if (useCards) {
         const cardsHtml = filtered.map(({ st, idx }) => {
           const isRetired = st.status === 'Retirado';
-          const telHref = formatPhoneHref(st.parentPhone);
           const waUrl = formatWhatsAppUrl(st.parentPhone);
-
+          const telHref = formatPhoneHref(st.parentPhone);
           return `
-            <div class="bg-white rounded-2xl border ${isRetired ? 'border-rose-200 bg-rose-50/40' : 'border-slate-200'} p-3.5 shadow-xs space-y-2.5">
+            <div class="bg-white rounded-2xl border border-slate-200 p-3 shadow-xs space-y-2.5 ${isRetired ? 'bg-rose-50/40 opacity-80' : ''}">
               <div class="flex items-center justify-between gap-2">
-                <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-lg bg-slate-900 text-white text-xs font-extrabold">
-                  #${idx + 1}
-                </span>
+                <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-extrabold">#${idx + 1}</span>
                 <div class="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -1274,8 +1338,8 @@
                   <button
                     type="button"
                     onclick="insertStudentBelow(${idx})"
-                    class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200"
-                    title="Insertar estudiante debajo"
+                    class="px-2 py-1 rounded-lg text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200"
+                    title="Insertar debajo"
                   >
                     + Debajo
                   </button>
@@ -1298,7 +1362,7 @@
                   oninput="updateStudentName(${idx}, this.value)"
                   onpaste="handleRosterPaste(event, ${idx})"
                   placeholder="Estudiante ${idx + 1}..."
-                  class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none text-sm font-semibold text-slate-800"
+                  class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 focus:outline-none text-sm font-semibold text-slate-800"
                 />
               </div>
 
@@ -1307,32 +1371,13 @@
                 <div class="flex items-center gap-2">
                   <input
                     type="tel"
-                    inputmode="tel"
                     value="${escapeHtml(st.parentPhone || '')}"
                     oninput="updateStudentPhone(${idx}, this.value)"
-                    placeholder="Ej: 70012345"
-                    class="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none text-sm font-semibold text-slate-800"
+                    placeholder="Ej: 71045821"
+                    class="flex-1 px-3 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 focus:outline-none text-sm font-medium text-slate-800"
                   />
-                  ${telHref ? `
-                    <a
-                      href="tel:${telHref}"
-                      class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold shrink-0"
-                      title="Llamar al padre/tutor"
-                    >
-                      📞
-                    </a>
-                  ` : ''}
-                  ${waUrl ? `
-                    <a
-                      href="${waUrl}"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shrink-0"
-                      title="Enviar WhatsApp al padre/tutor"
-                    >
-                      💬 WA
-                    </a>
-                  ` : ''}
+                  ${telHref ? `<a href="tel:${telHref}" class="px-3 py-2 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold border border-slate-300">📞</a>` : ''}
+                  ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">💬 WA</a>` : ''}
                 </div>
               </div>
             </div>
@@ -1341,9 +1386,21 @@
 
         return `
           <div class="space-y-3">
-            <div class="bg-slate-900 text-white rounded-2xl px-4 py-3">
-              <h2 class="text-sm font-extrabold">📋 Nómina — ${escapeHtml(app.currentSubject)} (${escapeHtml(app.currentCourse)})</h2>
-              <p class="text-[11px] text-slate-300 mt-0.5">Registra nombres y celulares de padres/tutores; se sincronizan en todo el cuaderno.</p>
+            <div class="bg-slate-900 text-white rounded-2xl px-4 py-3 space-y-1">
+              <input
+                type="text"
+                value="${escapeHtml(sTitles.nominaTitle)}"
+                oninput="updateSheetTitle('nominaTitle', this.value)"
+                title="Haz clic para editar el título"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-sm font-extrabold text-white border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
+              <input
+                type="text"
+                value="${escapeHtml(sTitles.nominaSub)}"
+                oninput="updateSheetTitle('nominaSub', this.value)"
+                title="Haz clic para editar el subtítulo"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-[11px] text-slate-300 border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
             </div>
             <div class="space-y-2.5">${cardsHtml}</div>
           </div>
@@ -1352,9 +1409,8 @@
 
       const rowsHtml = filtered.map(({ st, idx }) => {
         const isRetired = st.status === 'Retirado';
-        const telHref = formatPhoneHref(st.parentPhone);
         const waUrl = formatWhatsAppUrl(st.parentPhone);
-
+        const telHref = formatPhoneHref(st.parentPhone);
         return `
           <tr class="border-b border-slate-200 hover:bg-slate-50 transition ${isRetired ? 'bg-rose-50/40 opacity-75' : 'bg-white'}">
             <td class="px-3 py-2 text-center text-xs font-bold text-slate-500 w-12">${idx + 1}</td>
@@ -1372,32 +1428,13 @@
               <div class="flex items-center gap-1.5">
                 <input
                   type="tel"
-                  inputmode="tel"
                   value="${escapeHtml(st.parentPhone || '')}"
                   oninput="updateStudentPhone(${idx}, this.value)"
-                  placeholder="Ej: 70012345"
-                  class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/60 hover:border-slate-300 focus:border-emerald-500 focus:bg-white focus:outline-none text-xs sm:text-sm font-semibold text-slate-800"
+                  placeholder="Ej: 71045821"
+                  class="w-full px-2 py-1.5 rounded-lg border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white focus:outline-none text-xs font-medium text-slate-700"
                 />
-                ${waUrl ? `
-                  <a
-                    href="${waUrl}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="px-2 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[11px] font-bold shrink-0"
-                    title="Abrir WhatsApp del Padre/Tutor"
-                  >
-                    💬
-                  </a>
-                ` : ''}
-                ${telHref ? `
-                  <a
-                    href="tel:${telHref}"
-                    class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold shrink-0"
-                    title="Llamar"
-                  >
-                    📞
-                  </a>
-                ` : ''}
+                ${telHref ? `<a href="tel:${telHref}" title="Llamar" class="no-print px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold shrink-0">📞</a>` : ''}
+                ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" title="Enviar WhatsApp" class="no-print px-2 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold shrink-0">💬</a>` : ''}
               </div>
             </td>
             <td class="px-3 py-1.5 text-center w-32">
@@ -1440,9 +1477,21 @@
       return `
         <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div class="bg-slate-900 text-white px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 class="text-sm font-extrabold">📋 Nómina Oficial de Estudiantes — ${escapeHtml(app.currentSubject)} (${escapeHtml(app.currentCourse)})</h2>
-              <p class="text-[11px] text-slate-300">Los nombres y celulares registrados aquí se sincronizan automáticamente en los 3 trimestres y en el Consolidado Anual.</p>
+            <div class="flex-1 min-w-[260px] space-y-1">
+              <input
+                type="text"
+                value="${escapeHtml(sTitles.nominaTitle)}"
+                oninput="updateSheetTitle('nominaTitle', this.value)"
+                title="Haz clic para editar el título"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-sm font-extrabold text-white border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
+              <input
+                type="text"
+                value="${escapeHtml(sTitles.nominaSub)}"
+                oninput="updateSheetTitle('nominaSub', this.value)"
+                title="Haz clic para editar el subtítulo"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-[11px] text-slate-300 border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
             </div>
           </div>
           <div class="sheet-scroll overflow-x-auto">
@@ -1468,6 +1517,7 @@
      */
     function renderTrimesterGradesView(trimKey) {
       const tData = app.courseData.trimesters[trimKey];
+      const ct = tData.customTexts;
       const filtered = getFilteredStudents();
 
       // MODO TARJETAS ADAPTATIVO PARA IPHONE
@@ -1482,241 +1532,210 @@
               ? 'text-emerald-700'
               : 'text-rose-600';
 
-          // Si está activo Modo Captura Padres en iPhone, muestra resumen limpio para padres
-          if (app.captureMode) {
-            const taskPills = Array.from({ length: tData.taskCount }, (_, kIdx) => {
-              const info = getTaskParentCode(g.tasks[kIdx]);
-              return `
-                <button
-                  type="button"
-                  onclick="cycleTaskFromParentTable('${trimKey}', '${st.uid}', ${kIdx})"
-                  class="tap-btn px-2.5 py-1.5 rounded-xl border text-xs flex flex-col items-center justify-center ${info.cls}"
-                >
-                  <span class="text-[9px] opacity-85">${escapeHtml(tData.taskLabels[kIdx])}</span>
-                  <span class="font-black">${info.code}</span>
-                </button>
-              `;
-            }).join('');
-
-            const examPills = Array.from({ length: tData.examCount }, (_, eIdx) => {
-              const badge = getExamParentBadge(g.exams[eIdx]);
-              return `
-                <div class="px-2.5 py-1.5 rounded-xl border text-center ${badge.cls}">
-                  <div class="text-[9px] opacity-80">${escapeHtml(tData.examLabels[eIdx])}</div>
-                  <div class="text-[11px] font-black">${badge.text}</div>
-                </div>
-              `;
-            }).join('');
-
-            return `
-              <div class="bg-white rounded-2xl border-2 border-indigo-200 p-3.5 shadow-xs space-y-2.5">
-                <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                  <div class="min-w-0">
-                    <span class="text-xs font-extrabold text-indigo-700">#${idx + 1}</span>
-                    <span class="text-sm font-bold text-slate-900 ml-1">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</span>
-                  </div>
-                  ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold shrink-0">💬 Padre</a>` : ''}
-                </div>
-                <div>
-                  <div class="text-[10px] font-extrabold uppercase text-amber-800 mb-1">Hacer (Toca para alternar S / I / T / N)</div>
-                  <div class="grid grid-cols-3 gap-1.5">${taskPills}</div>
-                </div>
-                <div>
-                  <div class="text-[10px] font-extrabold uppercase text-sky-800 mb-1">Saber (Desempeño)</div>
-                  <div class="grid grid-cols-2 gap-1.5">${examPills}</div>
-                </div>
-              </div>
-            `;
-          }
-
-          const serInputsHtml = Array.from({ length: SER_COLUMNS }, (_, sIdx) => {
+          const serInputs = Array.from({ length: SER_COLUMNS }, (_, sIdx) => {
             const val = calc.serEffectiveValues[sIdx];
             return `
-              <div class="bg-purple-50/70 rounded-xl p-1.5 border border-purple-200 text-center">
-                <div class="text-[10px] font-bold text-purple-900 truncate mb-1">${escapeHtml(tData.serLabels[sIdx])}</div>
+              <div class="bg-purple-50/70 rounded-xl p-2 border border-purple-200/80">
+                <div class="text-[10px] font-bold text-purple-900 truncate mb-1">${escapeHtml(tData.serLabels[sIdx])} <span class="text-slate-400 font-semibold">/10</span></div>
                 <input
                   type="number"
-                  inputmode="numeric"
                   min="0"
                   max="10"
                   step="1"
-                  value="${val !== '' && val !== null && val !== undefined ? Math.round(Number(val)) : ''}"
+                  value="${val !== '' && val !== null && val !== undefined ? val : ''}"
                   oninput="updateSerGrade('${trimKey}', '${st.uid}', ${sIdx}, this.value)"
                   placeholder="—"
-                  class="w-full h-9 text-center rounded-lg border border-purple-300 bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  class="w-full h-9 text-center rounded-lg border border-purple-300 bg-white text-sm font-extrabold text-purple-950 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
             `;
           }).join('');
 
-          const examInputsHtml = Array.from({ length: tData.examCount }, (_, eIdx) => {
-            const rawE = g.exams[eIdx];
-            const dispE = (rawE !== '' && rawE !== null && rawE !== undefined && !isNaN(Number(rawE))) ? Math.round(Number(rawE)) : '';
-            return `
-              <div class="bg-sky-50/70 rounded-xl p-1.5 border border-sky-200 text-center">
-                <div class="text-[10px] font-bold text-sky-900 truncate mb-1">${escapeHtml(tData.examLabels[eIdx])}</div>
-                <input
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  max="45"
-                  step="1"
-                  value="${dispE}"
-                  oninput="updateExamGrade('${trimKey}', '${st.uid}', ${eIdx}, this.value)"
-                  placeholder="—"
-                  class="w-full h-9 text-center rounded-lg border border-sky-300 bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
-            `;
-          }).join('');
+          const examInputs = Array.from({ length: tData.examCount }, (_, eIdx) => `
+            <div class="bg-sky-50/70 rounded-xl p-2 border border-sky-200/80">
+              <div class="text-[10px] font-bold text-sky-900 truncate mb-1">${escapeHtml(tData.examLabels[eIdx])}</div>
+              <input
+                type="number"
+                min="0"
+                max="45"
+                step="1"
+                value="${g.exams[eIdx]}"
+                oninput="updateExamGrade('${trimKey}', '${st.uid}', ${eIdx}, this.value)"
+                placeholder="—"
+                class="w-full h-9 text-center rounded-lg border border-sky-300 bg-white text-sm font-extrabold text-sky-950 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+          `).join('');
 
-          const taskInputsHtml = Array.from({ length: tData.taskCount }, (_, kIdx) => {
-            const rawT = g.tasks[kIdx];
-            const dispT = (rawT !== '' && rawT !== null && rawT !== undefined && !isNaN(Number(rawT))) ? Math.round(Number(rawT)) : '';
+          const taskInputs = Array.from({ length: tData.taskCount }, (_, kIdx) => {
             const pInfo = getTaskParentCode(g.tasks[kIdx]);
             return `
-              <div class="bg-amber-50/70 rounded-xl p-1.5 border border-amber-200 text-center">
+              <div class="bg-amber-50/70 rounded-xl p-2 border border-amber-200/80">
                 <div class="flex items-center justify-between gap-1 mb-1">
                   <span class="text-[10px] font-bold text-amber-900 truncate">${escapeHtml(tData.taskLabels[kIdx])}</span>
-                  <span class="text-[9px] px-1 rounded ${pInfo.cls}">${pInfo.code}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] ${pInfo.cls}">${pInfo.code}</span>
                 </div>
                 <input
                   type="number"
-                  inputmode="numeric"
                   min="0"
                   max="40"
                   step="1"
-                  value="${dispT}"
+                  value="${g.tasks[kIdx]}"
                   oninput="updateTaskGrade('${trimKey}', '${st.uid}', ${kIdx}, this.value)"
                   placeholder="—"
-                  class="w-full h-9 text-center rounded-lg border border-amber-300 bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  class="w-full h-9 text-center rounded-lg border border-amber-300 bg-white text-sm font-extrabold text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
             `;
           }).join('');
 
-          const rawAuto = g.autoEval;
-          const dispAuto = (rawAuto !== '' && rawAuto !== null && rawAuto !== undefined && !isNaN(Number(rawAuto))) ? Math.round(Number(rawAuto)) : '';
-
           return `
-            <div id="grade-row-${st.uid}" class="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-xs space-y-3">
-              <!-- Cabecera Estudiante + Nota Final -->
-              <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <div class="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-xs space-y-3">
+              <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white text-[11px] font-extrabold">#${idx + 1}</span>
+                    <span class="text-xs font-extrabold text-slate-400">#${idx + 1}</span>
                     <h3 class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</h3>
                   </div>
-                  ${st.parentPhone ? `<p class="text-[11px] text-slate-500 mt-0.5">📱 Padre/Tutor: ${escapeHtml(st.parentPhone)}</p>` : ''}
+                  ${st.parentPhone ? `<div class="text-[11px] text-slate-500 mt-0.5">📱 ${escapeHtml(st.parentPhone)} ${waUrl ? `<a href="${waUrl}" target="_blank" class="text-emerald-700 font-bold underline ml-1">WhatsApp</a>` : ''}</div>` : ''}
                 </div>
-                <div id="final-cell-${st.uid}" class="flex items-center gap-1.5 shrink-0 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200">
-                  <span class="text-base font-black ${finalColor}">${calc.finalScore}</span>
-                  <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded ${calc.levelBadge}">${calc.level}</span>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span class="text-lg font-black ${finalColor}">${calc.finalScore}</span>
+                  <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-lg ${calc.levelBadge}">${calc.level}</span>
                 </div>
               </div>
 
-              <!-- SER /10 -->
-              <div>
-                <div class="flex items-center justify-between text-[11px] font-extrabold text-purple-900 mb-1.5">
-                  <span>SER (10 pts)</span>
-                  <span class="bg-purple-100 px-2 py-0.5 rounded-md">Prom: <strong id="ser-prom-${st.uid}">${calc.serScore}</strong>/10</span>
+              ${!app.captureMode ? `
+                <div>
+                  <div class="flex items-center justify-between text-[11px] font-extrabold text-purple-900 mb-1.5">
+                    <span>SER (10 pts)</span>
+                    <span>Prom: ${calc.serScore}/10</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">${serInputs}</div>
                 </div>
-                <div class="grid grid-cols-2 gap-1.5">${serInputsHtml}</div>
-              </div>
 
-              <!-- SABER /45 -->
-              <div>
-                <div class="flex items-center justify-between text-[11px] font-extrabold text-sky-900 mb-1.5">
-                  <span>SABER (45 pts)</span>
-                  <span class="bg-sky-100 px-2 py-0.5 rounded-md">Prom: <strong id="saber-prom-${st.uid}">${calc.saberScore}</strong>/45</span>
+                <div>
+                  <div class="flex items-center justify-between text-[11px] font-extrabold text-sky-900 mb-1.5">
+                    <span>SABER (45 pts)</span>
+                    <span>Prom: ${calc.saberScore}/45</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">${examInputs}</div>
                 </div>
-                <div class="grid grid-cols-2 gap-1.5">${examInputsHtml}</div>
-              </div>
 
-              <!-- HACER /40 -->
-              <div>
-                <div class="flex items-center justify-between text-[11px] font-extrabold text-amber-900 mb-1.5">
-                  <span>HACER (40 pts)</span>
-                  <span class="bg-amber-100 px-2 py-0.5 rounded-md">Prom: <strong id="hacer-prom-${st.uid}">${calc.hacerScore}</strong>/40</span>
+                <div>
+                  <div class="flex items-center justify-between text-[11px] font-extrabold text-amber-900 mb-1.5">
+                    <span>HACER (40 pts)</span>
+                    <span>Prom: ${calc.hacerScore}/40</span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2">${taskInputs}</div>
                 </div>
-                <div class="grid grid-cols-3 gap-1.5">${taskInputsHtml}</div>
-              </div>
 
-              <!-- AUTOEVALUACIÓN /5 -->
-              <div class="flex items-center justify-between bg-teal-50/70 border border-teal-200 rounded-xl px-3 py-2">
-                <span class="text-xs font-extrabold text-teal-900">Autoevaluación (máx. 5 pts)</span>
-                <input
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  max="5"
-                  step="1"
-                  value="${dispAuto}"
-                  oninput="updateAutoEvalGrade('${trimKey}', '${st.uid}', this.value)"
-                  placeholder="—"
-                  class="w-16 h-9 text-center rounded-lg border border-teal-300 bg-white font-extrabold text-teal-950 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
+                <div class="flex items-center justify-between bg-teal-50 rounded-xl p-2.5 border border-teal-200">
+                  <span class="text-xs font-extrabold text-teal-900">AUTOEVALUACIÓN (/5 pts)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="1"
+                    value="${g.autoEval}"
+                    oninput="updateAutoEvalGrade('${trimKey}', '${st.uid}', this.value)"
+                    placeholder="—"
+                    class="w-16 h-9 text-center rounded-lg border border-teal-300 bg-white text-sm font-black text-teal-950 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              ` : `
+                <div class="space-y-2">
+                  <div class="text-[11px] font-extrabold text-indigo-900">Cumplimiento de Hacer (Toca para alternar):</div>
+                  <div class="flex flex-wrap gap-1.5">
+                    ${Array.from({ length: tData.taskCount }, (_, kIdx) => {
+                      const info = getTaskParentCode(g.tasks[kIdx]);
+                      return `
+                        <button
+                          type="button"
+                          onclick="cycleTaskFromParentTable('${trimKey}', '${st.uid}', ${kIdx})"
+                          class="tap-btn px-2.5 py-1.5 rounded-xl border text-xs ${info.cls}"
+                        >
+                          ${escapeHtml(tData.taskLabels[kIdx])}: <strong>${info.code}</strong>
+                        </button>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              `}
             </div>
           `;
         }).join('');
 
         return `
           <div class="space-y-3">
-            <div class="bg-slate-900 text-white rounded-2xl px-4 py-3">
-              <h2 class="text-sm font-extrabold">📊 ${TRIM_NAMES[trimKey]} — ${escapeHtml(app.currentCourse)}</h2>
-              <p class="text-[11px] text-slate-300 mt-0.5">Vista adaptada para iPhone · Notas redondeadas a enteros sobre 100 pts (Mín. 51).</p>
+            <div class="bg-slate-900 text-white rounded-2xl px-4 py-3 space-y-1">
+              <input
+                type="text"
+                value="${escapeHtml(ct.c1Title)}"
+                oninput="updateTrimCustomText('${trimKey}', 'c1Title', this.value)"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-sm font-extrabold text-white border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
+              <input
+                type="text"
+                value="${escapeHtml(ct.c1Sub)}"
+                oninput="updateTrimCustomText('${trimKey}', 'c1Sub', this.value)"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-[11px] text-slate-300 border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
             </div>
             <div class="space-y-3">${mobileCards}</div>
           </div>
         `;
       }
 
-      // --- CUADRO 1: REGISTRO PRINCIPAL DE CALIFICACIONES (iPad y Laptop) ---
+      // --- CUADRO 1: REGISTRO PRINCIPAL DE CALIFICACIONES (iPad y Laptop con cabeceras verticales de abajo hacia arriba) ---
       let cuadro1Html = '';
       if (!app.captureMode) {
         const serHeaders = Array.from({ length: SER_COLUMNS }, (_, sIdx) => {
-          const isAuto = sIdx === 0 || sIdx === 1 || sIdx === 2;
-          const autoHint = sIdx === 0 ? 'Auto Asist.' : sIdx === 1 ? 'Auto Tareas' : sIdx === 2 ? 'Auto Exám.' : '/10 pts';
           return `
-            <th class="bg-purple-50 border-r border-slate-200 px-1 py-1.5 text-center min-w-[78px]">
-              <input
-                type="text"
-                value="${escapeHtml(tData.serLabels[sIdx])}"
-                oninput="updateSerLabel('${trimKey}', ${sIdx}, this.value)"
-                title="Haz clic para editar el nombre de este criterio del SER"
-                class="w-full bg-transparent text-center text-[10px] font-extrabold text-purple-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 rounded px-0.5"
-              />
-              <div class="text-[9px] font-semibold ${isAuto ? 'text-purple-600' : 'text-slate-400'}">
-                ${autoHint}
+            <th class="bg-purple-50 border-r border-slate-200 px-1 py-1 text-center align-bottom min-w-[54px]">
+              <div class="vertical-header-wrap">
+                <input
+                  type="text"
+                  value="${escapeHtml(tData.serLabels[sIdx])}"
+                  oninput="updateSerLabel('${trimKey}', ${sIdx}, this.value)"
+                  title="Haz clic para editar el nombre de este criterio del SER"
+                  class="vertical-header-text bg-transparent text-[11px] font-extrabold text-purple-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 rounded px-0.5"
+                />
+                <div class="text-[9px] font-semibold text-slate-400 mt-0.5">
+                  /10
+                </div>
               </div>
             </th>
           `;
         }).join('');
 
         const examHeaders = Array.from({ length: tData.examCount }, (_, eIdx) => `
-          <th class="bg-sky-50 border-r border-slate-200 px-1 py-1.5 text-center min-w-[64px]">
-            <input
-              type="text"
-              value="${escapeHtml(tData.examLabels[eIdx])}"
-              oninput="updateExamLabel('${trimKey}', ${eIdx}, this.value)"
-              title="Haz clic para renombrar este examen"
-              class="w-full bg-transparent text-center text-[10px] font-extrabold text-sky-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 rounded px-0.5"
-            />
-            <div class="text-[9px] text-sky-600 font-semibold">/45</div>
+          <th class="bg-sky-50 border-r border-slate-200 px-1 py-1 text-center align-bottom min-w-[54px]">
+            <div class="vertical-header-wrap">
+              <input
+                type="text"
+                value="${escapeHtml(tData.examLabels[eIdx])}"
+                oninput="updateExamLabel('${trimKey}', ${eIdx}, this.value)"
+                title="Haz clic para renombrar este examen"
+                class="vertical-header-text bg-transparent text-[11px] font-extrabold text-sky-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 rounded px-0.5"
+              />
+              <div class="text-[9px] text-sky-600 font-semibold mt-0.5">/45</div>
+            </div>
           </th>
         `).join('');
 
         const taskHeaders = Array.from({ length: tData.taskCount }, (_, kIdx) => `
-          <th class="bg-amber-50 border-r border-slate-200 px-1 py-1.5 text-center min-w-[60px]">
-            <input
-              type="text"
-              value="${escapeHtml(tData.taskLabels[kIdx])}"
-              oninput="updateTaskLabel('${trimKey}', ${kIdx}, this.value)"
-              title="Haz clic para renombrar esta actividad"
-              class="w-full bg-transparent text-center text-[10px] font-extrabold text-amber-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 rounded px-0.5"
-            />
-            <div class="text-[9px] text-amber-700 font-semibold">/40</div>
+          <th class="bg-amber-50 border-r border-slate-200 px-1 py-1 text-center align-bottom min-w-[52px]">
+            <div class="vertical-header-wrap">
+              <input
+                type="text"
+                value="${escapeHtml(tData.taskLabels[kIdx])}"
+                oninput="updateTaskLabel('${trimKey}', ${kIdx}, this.value)"
+                title="Haz clic para renombrar esta actividad"
+                class="vertical-header-text bg-transparent text-[11px] font-extrabold text-amber-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 rounded px-0.5"
+              />
+              <div class="text-[9px] text-amber-700 font-semibold mt-0.5">/40</div>
+            </div>
           </th>
         `).join('');
 
@@ -1729,7 +1748,6 @@
           const serCells = Array.from({ length: SER_COLUMNS }, (_, sIdx) => {
             const val = calc.serEffectiveValues[sIdx];
             const isAutoComputed = (sIdx === 0 || sIdx === 1 || sIdx === 2) && !g.serManualOverride[sIdx] && val !== '';
-            const displayVal = (val !== '' && val !== null && val !== undefined) ? Math.round(Number(val)) : '';
             return `
               <td class="border-r border-slate-200 p-1 text-center ${isAutoComputed ? 'bg-purple-50/50' : ''}">
                 <input
@@ -1737,10 +1755,10 @@
                   min="0"
                   max="10"
                   step="1"
-                  value="${displayVal}"
+                  value="${val !== '' && val !== null && val !== undefined ? val : ''}"
                   oninput="updateSerGrade('${trimKey}', '${st.uid}', ${sIdx}, this.value)"
                   placeholder="—"
-                  class="w-12 h-7 text-center rounded-md border border-slate-200 focus:border-purple-500 focus:bg-white focus:outline-none text-xs font-bold ${
+                  class="w-11 h-7 text-center rounded-md border border-slate-200 focus:border-purple-500 focus:bg-white focus:outline-none text-xs font-bold ${
                     isAutoComputed ? 'text-purple-800 bg-purple-50/60' : 'text-slate-800 bg-transparent'
                   }"
                 />
@@ -1748,46 +1766,35 @@
             `;
           }).join('');
 
-          const examCells = Array.from({ length: tData.examCount }, (_, eIdx) => {
-            const rawE = g.exams[eIdx];
-            const dispE = (rawE !== '' && rawE !== null && rawE !== undefined && !isNaN(Number(rawE))) ? Math.round(Number(rawE)) : '';
-            return `
-              <td class="border-r border-slate-200 p-1 text-center">
-                <input
-                  type="number"
-                  min="0"
-                  max="45"
-                  step="1"
-                  value="${dispE}"
-                  oninput="updateExamGrade('${trimKey}', '${st.uid}', ${eIdx}, this.value)"
-                  placeholder="—"
-                  class="w-12 h-7 text-center rounded-md border border-slate-200 focus:border-sky-500 focus:bg-white focus:outline-none text-xs font-bold text-slate-800 bg-transparent"
-                />
-              </td>
-            `;
-          }).join('');
+          const examCells = Array.from({ length: tData.examCount }, (_, eIdx) => `
+            <td class="border-r border-slate-200 p-1 text-center">
+              <input
+                type="number"
+                min="0"
+                max="45"
+                step="1"
+                value="${g.exams[eIdx]}"
+                oninput="updateExamGrade('${trimKey}', '${st.uid}', ${eIdx}, this.value)"
+                placeholder="—"
+                class="w-11 h-7 text-center rounded-md border border-slate-200 focus:border-sky-500 focus:bg-white focus:outline-none text-xs font-bold text-slate-800 bg-transparent"
+              />
+            </td>
+          `).join('');
 
-          const taskCells = Array.from({ length: tData.taskCount }, (_, kIdx) => {
-            const rawT = g.tasks[kIdx];
-            const dispT = (rawT !== '' && rawT !== null && rawT !== undefined && !isNaN(Number(rawT))) ? Math.round(Number(rawT)) : '';
-            return `
-              <td class="border-r border-slate-200 p-1 text-center">
-                <input
-                  type="number"
-                  min="0"
-                  max="40"
-                  step="1"
-                  value="${dispT}"
-                  oninput="updateTaskGrade('${trimKey}', '${st.uid}', ${kIdx}, this.value)"
-                  placeholder="—"
-                  class="w-11 h-7 text-center rounded-md border border-slate-200 focus:border-amber-500 focus:bg-white focus:outline-none text-xs font-bold text-slate-800 bg-transparent"
-                />
-              </td>
-            `;
-          }).join('');
-
-          const rawAuto = g.autoEval;
-          const dispAuto = (rawAuto !== '' && rawAuto !== null && rawAuto !== undefined && !isNaN(Number(rawAuto))) ? Math.round(Number(rawAuto)) : '';
+          const taskCells = Array.from({ length: tData.taskCount }, (_, kIdx) => `
+            <td class="border-r border-slate-200 p-1 text-center">
+              <input
+                type="number"
+                min="0"
+                max="40"
+                step="1"
+                value="${g.tasks[kIdx]}"
+                oninput="updateTaskGrade('${trimKey}', '${st.uid}', ${kIdx}, this.value)"
+                placeholder="—"
+                class="w-11 h-7 text-center rounded-md border border-slate-200 focus:border-amber-500 focus:bg-white focus:outline-none text-xs font-bold text-slate-800 bg-transparent"
+              />
+            </td>
+          `).join('');
 
           const finalColor = !calc.hasAnyData
             ? 'text-slate-400'
@@ -1823,7 +1830,7 @@
                   min="0"
                   max="5"
                   step="1"
-                  value="${dispAuto}"
+                  value="${g.autoEval}"
                   oninput="updateAutoEvalGrade('${trimKey}', '${st.uid}', this.value)"
                   placeholder="—"
                   class="w-11 h-7 text-center rounded-md border border-teal-200 focus:border-teal-600 focus:bg-white focus:outline-none text-xs font-extrabold text-teal-900 bg-transparent"
@@ -1841,18 +1848,40 @@
         }).join('');
 
         cuadro1Html = `
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div id="block-cuadro1" class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 class="text-xs sm:text-sm font-extrabold">📊 Cuadro 1 — Registro Principal de Calificaciones · ${TRIM_NAMES[trimKey]} (${escapeHtml(app.currentCourse)})</h2>
-                <p class="text-[11px] text-slate-300">Notas redondeadas a enteros · SER: Asistencia, Responsabilidad (Tareas), Dedicación (Exámenes) y Respeto.</p>
+              <div class="flex-1 min-w-[260px] space-y-0.5">
+                <input
+                  type="text"
+                  value="${escapeHtml(ct.c1Title)}"
+                  oninput="updateTrimCustomText('${trimKey}', 'c1Title', this.value)"
+                  title="Haz clic para editar el título de este cuadro"
+                  class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-xs sm:text-sm font-extrabold text-white border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  value="${escapeHtml(ct.c1Sub)}"
+                  oninput="updateTrimCustomText('${trimKey}', 'c1Sub', this.value)"
+                  title="Haz clic para editar el subtítulo de este cuadro"
+                  class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-[11px] text-slate-300 border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+                />
               </div>
-              <span class="text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2.5 py-1 rounded-lg">
-                Total: 100 pts (Mín. 51)
-              </span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onclick="printSingleSection('cuadro1')"
+                  class="no-print px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-600 transition"
+                  title="Imprimir solo el Cuadro 1 en una página"
+                >
+                  🖨️ Imprimir Cuadro 1
+                </button>
+                <span class="text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2.5 py-1 rounded-lg">
+                  Total: 100 pts (Mín. 51)
+                </span>
+              </div>
             </div>
 
-            <div class="sheet-scroll overflow-x-auto max-h-[65vh]">
+            <div class="sheet-scroll overflow-x-auto max-h-[68vh]">
               <table class="w-full border-collapse text-left">
                 <thead class="sticky top-0 z-20 select-none">
                   <tr class="border-b border-slate-300 text-[11px] font-black uppercase tracking-wider">
@@ -1867,13 +1896,13 @@
                   </tr>
                   <tr class="border-b border-slate-300 text-[10px]">
                     ${serHeaders}
-                    <th class="bg-purple-200 text-purple-950 font-black px-2 py-1 text-center border-r border-slate-300 min-w-[54px]">Prom.<br>/10</th>
+                    <th class="bg-purple-200 text-purple-950 font-black px-2 py-1 text-center align-bottom border-r border-slate-300 min-w-[54px]">Prom.<br>/10</th>
 
                     ${examHeaders}
-                    <th class="bg-sky-200 text-sky-950 font-black px-2 py-1 text-center border-r border-slate-300 min-w-[54px]">Prom.<br>/45</th>
+                    <th class="bg-sky-200 text-sky-950 font-black px-2 py-1 text-center align-bottom border-r border-slate-300 min-w-[54px]">Prom.<br>/45</th>
 
                     ${taskHeaders}
-                    <th class="bg-amber-200 text-amber-950 font-black px-2 py-1 text-center border-r border-slate-300 min-w-[54px]">Prom.<br>/40</th>
+                    <th class="bg-amber-200 text-amber-950 font-black px-2 py-1 text-center align-bottom border-r border-slate-300 min-w-[54px]">Prom.<br>/40</th>
                   </tr>
                 </thead>
                 <tbody>${bodyRows}</tbody>
@@ -1883,16 +1912,20 @@
         `;
       }
 
-      // --- CUADRO 2: SEGUIMIENTO PARA PADRES DE FAMILIA ---
+      // --- CUADRO 2: SEGUIMIENTO PARA PADRES DE FAMILIA (Cabeceras verticales de abajo hacia arriba) ---
       const parentTaskHeaders = Array.from({ length: tData.taskCount }, (_, kIdx) => `
-        <th class="bg-amber-50 border-r border-slate-200 px-1.5 py-1.5 text-center text-[10px] font-extrabold text-amber-900 min-w-[54px]">
-          ${escapeHtml(tData.taskLabels[kIdx])}
+        <th class="bg-amber-50 border-r border-slate-200 px-1 py-1 text-center align-bottom min-w-[46px]">
+          <div class="vertical-header-wrap">
+            <span class="vertical-header-text text-[11px] font-extrabold text-amber-900">${escapeHtml(tData.taskLabels[kIdx])}</span>
+          </div>
         </th>
       `).join('');
 
       const parentExamHeaders = Array.from({ length: tData.examCount }, (_, eIdx) => `
-        <th class="bg-sky-50 border-r border-slate-200 px-1.5 py-1.5 text-center text-[10px] font-extrabold text-sky-900 min-w-[82px]">
-          ${escapeHtml(tData.examLabels[eIdx])}
+        <th class="bg-sky-50 border-r border-slate-200 px-1 py-1 text-center align-bottom min-w-[82px]">
+          <div class="vertical-header-wrap">
+            <span class="vertical-header-text text-[11px] font-extrabold text-sky-900">${escapeHtml(tData.examLabels[eIdx])}</span>
+          </div>
         </th>
       `).join('');
 
@@ -1957,15 +1990,33 @@
       }).join('');
 
       const cuadro2Html = `
-        <div id="parentCaptureCard" class="bg-white rounded-2xl border-2 ${app.captureMode ? 'border-indigo-500 shadow-lg' : 'border-slate-200 shadow-xs'} overflow-hidden">
+        <div id="block-cuadro2" class="bg-white rounded-2xl border-2 ${app.captureMode ? 'border-indigo-500 shadow-lg' : 'border-slate-200 shadow-xs'} overflow-hidden">
           <div class="bg-indigo-950 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 class="text-xs sm:text-sm font-extrabold">👨‍👩‍👧 Cuadro 2 — Seguimiento de Tareas y Exámenes para Padres · ${escapeHtml(app.institution)}</h2>
-              <p class="text-[11px] text-indigo-200">
-                ${escapeHtml(app.currentSubject)} · ${escapeHtml(app.currentCourse)} · ${TRIM_NAMES[trimKey]} — Reflejo automático del Cuadro 1 listo para compartir.
-              </p>
+            <div class="flex-1 min-w-[260px] space-y-0.5">
+              <input
+                type="text"
+                value="${escapeHtml(ct.c2Title)}"
+                oninput="updateTrimCustomText('${trimKey}', 'c2Title', this.value)"
+                title="Haz clic para editar el título de este cuadro"
+                class="w-full bg-transparent hover:bg-indigo-900/80 focus:bg-indigo-900 text-xs sm:text-sm font-extrabold text-white border border-dashed border-transparent hover:border-indigo-500 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
+              <input
+                type="text"
+                value="${escapeHtml(ct.c2Sub)}"
+                oninput="updateTrimCustomText('${trimKey}', 'c2Sub', this.value)"
+                title="Haz clic para editar el subtítulo de este cuadro"
+                class="w-full bg-transparent hover:bg-indigo-900/80 focus:bg-indigo-900 text-[11px] text-indigo-200 border border-dashed border-transparent hover:border-indigo-500 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
             </div>
-            <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+            <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-bold shrink-0">
+              <button
+                type="button"
+                onclick="printSingleSection('cuadro2')"
+                class="no-print px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-900 hover:bg-indigo-800 text-white border border-indigo-600 transition mr-1"
+                title="Imprimir solo el Cuadro 2 en una página"
+              >
+                🖨️ Imprimir Cuadro 2
+              </button>
               <span class="px-2 py-0.5 rounded bg-emerald-500 text-white">S = Sí (40)</span>
               <span class="px-2 py-0.5 rounded bg-amber-400 text-slate-950">I = Incompleto (20–25)</span>
               <span class="px-2 py-0.5 rounded bg-violet-600 text-white">T = Tarde (10)</span>
@@ -1973,7 +2024,7 @@
             </div>
           </div>
 
-          <div class="sheet-scroll overflow-x-auto max-h-[65vh]">
+          <div class="sheet-scroll overflow-x-auto max-h-[68vh]">
             <table class="w-full border-collapse text-left">
               <thead class="sticky top-0 z-20 select-none">
                 <tr class="border-b border-slate-300 text-[11px] font-black uppercase">
@@ -1984,7 +2035,7 @@
                 </tr>
                 <tr class="border-b border-slate-300">
                   ${parentTaskHeaders}
-                  <th class="bg-slate-200 text-slate-800 px-2 py-1 text-center text-[10px] font-extrabold border-r border-slate-300 min-w-[130px]">Resumen</th>
+                  <th class="bg-slate-200 text-slate-800 px-2 py-1 text-center align-bottom text-[10px] font-extrabold border-r border-slate-300 min-w-[130px]">Resumen</th>
                   ${parentExamHeaders}
                 </tr>
               </thead>
@@ -2048,10 +2099,33 @@
         }).join('');
 
         cuadro3Html = `
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div id="block-cuadro3" class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div class="bg-slate-800 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
-              <h2 class="text-xs sm:text-sm font-extrabold">📈 Cuadro 3 — Reporte Pedagógico Automático · ${TRIM_NAMES[trimKey]}</h2>
-              <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+              <div class="flex-1 min-w-[260px] space-y-0.5">
+                <input
+                  type="text"
+                  value="${escapeHtml(ct.c3Title)}"
+                  oninput="updateTrimCustomText('${trimKey}', 'c3Title', this.value)"
+                  title="Haz clic para editar el título del reporte"
+                  class="w-full bg-transparent hover:bg-slate-700/80 focus:bg-slate-700 text-xs sm:text-sm font-extrabold text-white border border-dashed border-transparent hover:border-slate-500 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  value="${escapeHtml(ct.c3Sub)}"
+                  oninput="updateTrimCustomText('${trimKey}', 'c3Sub', this.value)"
+                  title="Haz clic para editar el subtítulo del reporte"
+                  class="w-full bg-transparent hover:bg-slate-700/80 focus:bg-slate-700 text-[11px] text-slate-300 border border-dashed border-transparent hover:border-slate-500 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+                />
+              </div>
+              <div class="flex flex-wrap items-center gap-2 text-xs font-bold shrink-0">
+                <button
+                  type="button"
+                  onclick="printSingleSection('cuadro3')"
+                  class="no-print px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-700 hover:bg-slate-600 text-white border border-slate-500 transition"
+                  title="Imprimir solo el Cuadro 3 (Reporte) en una página"
+                >
+                  🖨️ Imprimir Cuadro 3
+                </button>
                 <span class="bg-slate-700 px-2.5 py-1 rounded-lg">Promedio Curso: <strong class="text-emerald-300">${avgCourse} pts</strong></span>
                 <span class="bg-emerald-600/30 text-emerald-200 px-2.5 py-1 rounded-lg">Aprobados (≥51): ${approvedCount}</span>
                 <span class="bg-rose-600/30 text-rose-200 px-2.5 py-1 rounded-lg">En Riesgo (&lt;51): ${riskCount}</span>
@@ -2090,32 +2164,30 @@
      */
     function renderTrimesterAttendanceView(trimKey) {
       const tData = app.courseData.trimesters[trimKey];
+      const ct = tData.customTexts;
       const weekCount = tData.weekCount || DEFAULT_WEEKS;
       const totalSessions = weekCount * SESSIONS_PER_WEEK;
       const filtered = getFilteredStudents();
 
-      // VISTA MÓVIL IPHONE: Selector de Semana y Sesión + Tarjetas grandes para marcar con un toque
+      // MODO ADAPTATIVO IPHONE: Selector de Semana/Sesión + Lista vertical cómoda
       if (isMobileCardLayout()) {
         if (app.mobileAttSession >= totalSessions) app.mobileAttSession = 0;
-        const c = app.mobileAttSession;
-        const curWeek = Math.floor(c / SESSIONS_PER_WEEK) + 1;
-        const curSes = (c % SESSIONS_PER_WEEK) + 1;
-        const curDate = tData.sessionDates[c] || '';
+        const curCol = app.mobileAttSession;
+        const curW = Math.floor(curCol / SESSIONS_PER_WEEK) + 1;
+        const curS = (curCol % SESSIONS_PER_WEEK) + 1;
+        const curDate = tData.sessionDates[curCol] || '';
 
-        const sessionOptions = [];
-        for (let w = 1; w <= weekCount; w++) {
-          for (let s = 1; s <= SESSIONS_PER_WEEK; s++) {
-            const idxCol = (w - 1) * SESSIONS_PER_WEEK + (s - 1);
-            const dStr = tData.sessionDates[idxCol] ? ` (${tData.sessionDates[idxCol]})` : '';
-            sessionOptions.push(
-              `<option value="${idxCol}" ${idxCol === c ? 'selected' : ''}>Semana ${w} · Sesión ${s}${escapeHtml(dStr)}</option>`
-            );
-          }
-        }
+        const optionsHtml = Array.from({ length: totalSessions }, (_, idx) => {
+          const w = Math.floor(idx / SESSIONS_PER_WEEK) + 1;
+          const s = (idx % SESSIONS_PER_WEEK) + 1;
+          const d = tData.sessionDates[idx] ? ` (${tData.sessionDates[idx]})` : '';
+          return `<option value="${idx}" ${idx === curCol ? 'selected' : ''}>Semana ${w} · Sesión ${s}${d}</option>`;
+        }).join('');
 
-        const studentCards = filtered.map(({ st, idx }) => {
+        const mobileList = filtered.map(({ st, idx }) => {
           const att = calculateAttendanceStats(tData, st.uid);
-          const v = tData.attendanceByUid[st.uid][c];
+          const v = tData.attendanceByUid[st.uid][curCol];
+
           let btnCls = 'bg-slate-100 text-slate-500 border-slate-300';
           let lbl = 'Sin marcar';
           if (v === 'A') {
@@ -2137,7 +2209,7 @@
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs font-extrabold text-slate-400">#${idx + 1}</span>
-                  <span class="text-sm font-bold text-slate-900 truncate">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</span>
+                  <div class="text-sm font-bold text-slate-900 truncate">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</div>
                 </div>
                 <div id="att-sum-${st.uid}" class="text-[11px] font-semibold text-slate-500 mt-1">
                   <span class="text-emerald-700">A:${att.countA}</span> ·
@@ -2150,8 +2222,8 @@
               </div>
               <button
                 type="button"
-                id="att-btn-${st.uid}-${c}"
-                onclick="toggleAttendanceCell('${trimKey}', '${st.uid}', ${c})"
+                id="att-btn-${st.uid}-${curCol}"
+                onclick="toggleAttendanceCell('${trimKey}', '${st.uid}', ${curCol})"
                 class="tap-btn px-3 py-2.5 rounded-xl border text-xs min-w-[104px] text-center shrink-0 cursor-pointer ${btnCls}"
               >
                 ${lbl}
@@ -2163,53 +2235,42 @@
         return `
           <div class="space-y-3">
             <div class="bg-slate-900 text-white rounded-2xl p-3.5 space-y-2.5">
-              <div class="flex items-center justify-between gap-2">
-                <h2 class="text-sm font-extrabold">📅 Asistencia Móvil · ${TRIM_NAMES[trimKey]}</h2>
-                <span class="text-[11px] font-bold text-emerald-300">Sem. ${curWeek} · S${curSes}</span>
-              </div>
-
+              <input
+                type="text"
+                value="${escapeHtml(ct.asistTitle)}"
+                oninput="updateTrimCustomText('${trimKey}', 'asistTitle', this.value)"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-sm font-extrabold text-white border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
               <div class="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onclick="stepMobileSession(-1, ${totalSessions})"
-                  class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold"
-                >◀</button>
-                <select
-                  onchange="selectMobileSession(this.value)"
-                  class="flex-1 px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-bold focus:outline-none"
-                >
-                  ${sessionOptions.join('')}
+                <button type="button" onclick="stepMobileSession(-1, ${totalSessions})" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 font-bold text-white shrink-0">◀</button>
+                <select onchange="selectMobileSession(this.value)" class="flex-1 h-10 rounded-xl bg-slate-800 border border-slate-700 px-2.5 text-xs font-bold text-white">
+                  ${optionsHtml}
                 </select>
-                <button
-                  type="button"
-                  onclick="stepMobileSession(1, ${totalSessions})"
-                  class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold"
-                >▶</button>
+                <button type="button" onclick="stepMobileSession(1, ${totalSessions})" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 font-bold text-white shrink-0">▶</button>
               </div>
-
               <div class="flex items-center gap-2">
                 <input
                   type="text"
                   value="${escapeHtml(curDate)}"
-                  oninput="updateSessionDate('${trimKey}', ${c}, this.value)"
-                  placeholder="Fecha de sesión (Ej: 17 abr)"
-                  class="flex-1 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-400"
+                  oninput="updateSessionDate('${trimKey}', ${curCol}, this.value)"
+                  placeholder="Fecha Sem ${curW} - S${curS} (ej. 17 abr)"
+                  class="flex-1 h-9 rounded-xl bg-slate-800 border border-slate-700 px-3 text-xs font-semibold text-white placeholder-slate-400"
                 />
                 <button
                   type="button"
-                  onclick="fillSessionPresent('${trimKey}', ${c})"
-                  class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shrink-0"
+                  onclick="fillSessionPresent('${trimKey}', ${curCol})"
+                  class="px-3 h-9 rounded-xl bg-emerald-600 text-white text-xs font-extrabold shrink-0"
                 >
                   ✓ Todos A
                 </button>
               </div>
             </div>
-
-            <div class="space-y-2">${studentCards}</div>
+            <div class="space-y-2">${mobileList}</div>
           </div>
         `;
       }
 
+      // MODO MATRIZ COMPLETA (iPad y Laptop)
       let row1Weeks = '';
       for (let w = 1; w <= weekCount; w++) {
         const bgWeek = w % 2 === 0 ? 'bg-slate-200/80' : 'bg-slate-100';
@@ -2228,14 +2289,14 @@
           const borderRight = s === SESSIONS_PER_WEEK ? 'border-r border-slate-300' : 'border-r border-slate-200';
           const dateVal = tData.sessionDates[globalCol] || '';
           row2Dates += `
-            <th class="${bgWeek} ${borderRight} p-0.5 text-center min-w-[48px]">
+            <th class="${bgWeek} ${borderRight} p-0.5 text-center min-w-[44px]">
               <input
                 type="text"
                 value="${escapeHtml(dateVal)}"
                 oninput="updateSessionDate('${trimKey}', ${globalCol}, this.value)"
                 placeholder="Fecha"
                 title="Escribir fecha de Semana ${w} - Sesión ${s} (Ej: 17 abr)"
-                class="w-12 text-center bg-transparent hover:bg-slate-100 focus:bg-emerald-50 focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-0.5 py-0.5 text-[9px] font-semibold text-slate-600 placeholder-slate-300"
+                class="vertical-date-input mx-auto bg-transparent hover:bg-slate-100 focus:bg-emerald-50 focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-0.5 text-[10px] font-semibold text-slate-600 placeholder-slate-300"
               />
             </th>
           `;
@@ -2249,7 +2310,7 @@
           const globalCol = (w - 1) * SESSIONS_PER_WEEK + (s - 1);
           const borderRight = s === SESSIONS_PER_WEEK ? 'border-r border-slate-300' : 'border-r border-slate-200';
           row3Sessions += `
-            <th class="${bgWeek} ${borderRight} p-1 text-center min-w-[48px]">
+            <th class="${bgWeek} ${borderRight} p-1 text-center min-w-[44px]">
               <button
                 type="button"
                 onclick="fillSessionPresent('${trimKey}', ${globalCol})"
@@ -2343,9 +2404,21 @@
       return `
         <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 class="text-xs sm:text-sm font-extrabold">📅 Control de Asistencia (${weekCount} Semanas × 3 Sesiones) — ${TRIM_NAMES[trimKey]} (${escapeHtml(app.currentCourse)})</h2>
-              <p class="text-[11px] text-slate-300">Haz clic en cada casilla para alternar <b>A</b> (Puntual), <b>T</b> (Tarde &gt;10 min), <b>L</b> (Licencia) o <b>F</b> (Falta). Traduce automáticamente al <b>1–10 en la Columna 1 del SER</b>.</p>
+            <div class="flex-1 min-w-[260px] space-y-0.5">
+              <input
+                type="text"
+                value="${escapeHtml(ct.asistTitle)}"
+                oninput="updateTrimCustomText('${trimKey}', 'asistTitle', this.value)"
+                title="Haz clic para editar el título"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-xs sm:text-sm font-extrabold text-white border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
+              <input
+                type="text"
+                value="${escapeHtml(ct.asistSub)}"
+                oninput="updateTrimCustomText('${trimKey}', 'asistSub', this.value)"
+                title="Haz clic para editar el subtítulo"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-[11px] text-slate-300 border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
             </div>
           </div>
 
@@ -2377,6 +2450,7 @@
      */
     function renderAnnualGradesView() {
       const filtered = getFilteredStudents();
+      const sTitles = app.courseData.sheetTitles;
 
       if (isMobileCardLayout()) {
         const cards = filtered.map(({ st, idx }) => {
@@ -2387,19 +2461,19 @@
           const sum300 = (g1.hasAnyData ? g1.finalScore : 0) + (g2.hasAnyData ? g2.finalScore : 0) + (g3.hasAnyData ? g3.finalScore : 0);
           const evalTrims = (g1.hasAnyData ? 1 : 0) + (g2.hasAnyData ? 1 : 0) + (g3.hasAnyData ? 1 : 0);
           const annualFinal100 = evalTrims > 0 ? Math.round(sum300 / 3) : 0;
-          const approved = evalTrims > 0 && annualFinal100 >= 51;
 
           const attTrims = [g1, g2, g3].filter(x => x.attMarked > 0);
           const annualAttPct = attTrims.length > 0
             ? Math.round(attTrims.reduce((acc, x) => acc + x.attPct, 0) / attTrims.length)
             : 0;
+          const approved = evalTrims > 0 && annualFinal100 >= 51;
 
           return `
             <div class="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-xs space-y-2.5">
               <div class="flex items-center justify-between gap-2">
                 <div class="min-w-0">
-                  <span class="text-xs font-extrabold text-slate-400">#${idx + 1}</span>
-                  <span class="text-sm font-extrabold text-slate-900 ml-1">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</span>
+                  <span class="text-xs font-extrabold text-slate-400 mr-1">#${idx + 1}</span>
+                  <span class="text-sm font-extrabold text-slate-900">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</span>
                 </div>
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 ${
                   evalTrims === 0
@@ -2415,25 +2489,27 @@
               <div class="grid grid-cols-4 gap-1.5 text-center">
                 <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
                   <div class="text-[10px] font-bold text-slate-500">1° Trim</div>
-                  <div class="text-xs font-black text-slate-900">${g1.hasAnyData ? g1.finalScore : '—'}</div>
+                  <div class="text-xs font-extrabold text-slate-900">${g1.hasAnyData ? g1.finalScore : '—'}</div>
                 </div>
                 <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
                   <div class="text-[10px] font-bold text-slate-500">2° Trim</div>
-                  <div class="text-xs font-black text-slate-900">${g2.hasAnyData ? g2.finalScore : '—'}</div>
+                  <div class="text-xs font-extrabold text-slate-900">${g2.hasAnyData ? g2.finalScore : '—'}</div>
                 </div>
                 <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
                   <div class="text-[10px] font-bold text-slate-500">3° Trim</div>
-                  <div class="text-xs font-black text-slate-900">${g3.hasAnyData ? g3.finalScore : '—'}</div>
+                  <div class="text-xs font-extrabold text-slate-900">${g3.hasAnyData ? g3.finalScore : '—'}</div>
                 </div>
                 <div class="bg-emerald-50 rounded-xl p-2 border border-emerald-300">
-                  <div class="text-[10px] font-extrabold text-emerald-900">ANUAL</div>
+                  <div class="text-[10px] font-bold text-emerald-800">ANUAL</div>
                   <div class="text-sm font-black ${evalTrims === 0 ? 'text-slate-400' : approved ? 'text-emerald-700' : 'text-rose-600'}">
                     ${evalTrims > 0 ? annualFinal100 : '—'}
                   </div>
                 </div>
               </div>
-              <div class="text-[11px] text-slate-500 flex justify-end">
-                <span>Asistencia Anual: ${attTrims.length > 0 ? `${annualAttPct}%` : '—'}</span>
+
+              <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+                <span>Asistencia Anual: <strong class="text-slate-800">${attTrims.length > 0 ? `${annualAttPct}%` : '—'}</strong></span>
+                <span>Mínimo aprobación: 51 pts</span>
               </div>
             </div>
           `;
@@ -2441,9 +2517,19 @@
 
         return `
           <div class="space-y-3">
-            <div class="bg-slate-900 text-white rounded-2xl px-4 py-3">
-              <h2 class="text-sm font-extrabold">🏆 Notas Anuales — ${escapeHtml(app.currentSubject)} (${escapeHtml(app.currentCourse)})</h2>
-              <p class="text-[11px] text-slate-300 mt-0.5">Promedio redondeado de los 3 trimestres sobre 100 pts (Mín. 51).</p>
+            <div class="bg-slate-900 text-white rounded-2xl px-4 py-3 space-y-1">
+              <input
+                type="text"
+                value="${escapeHtml(sTitles.anualTitle)}"
+                oninput="updateSheetTitle('anualTitle', this.value)"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-sm font-extrabold text-white border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
+              <input
+                type="text"
+                value="${escapeHtml(sTitles.anualSub)}"
+                oninput="updateSheetTitle('anualSub', this.value)"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-[11px] text-slate-300 border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
             </div>
             <div class="space-y-2.5">${cards}</div>
           </div>
@@ -2509,9 +2595,21 @@
       return `
         <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div class="bg-slate-900 text-white px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 class="text-sm font-extrabold">🏆 Consolidado Final Anual — ${escapeHtml(app.currentSubject)} (${escapeHtml(app.currentCourse)})</h2>
-              <p class="text-[11px] text-slate-300">Nota Anual = Promedio redondeado de los 3 trimestres sobre 100 puntos (Nota mínima de aprobación anual: 51 puntos).</p>
+            <div class="flex-1 min-w-[260px] space-y-1">
+              <input
+                type="text"
+                value="${escapeHtml(sTitles.anualTitle)}"
+                oninput="updateSheetTitle('anualTitle', this.value)"
+                title="Haz clic para editar el título"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-sm font-extrabold text-white border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
+              <input
+                type="text"
+                value="${escapeHtml(sTitles.anualSub)}"
+                oninput="updateSheetTitle('anualSub', this.value)"
+                title="Haz clic para editar el subtítulo"
+                class="w-full bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-[11px] text-slate-300 border border-dashed border-transparent hover:border-slate-600 focus:border-emerald-400 rounded-lg px-1.5 py-0.5 focus:outline-none"
+              />
             </div>
           </div>
 
@@ -2735,6 +2833,18 @@
 
     function updateTaskLabel(trimKey, kIdx, val) {
       app.courseData.trimesters[trimKey].taskLabels[kIdx] = val;
+      saveCourseToDB();
+    }
+
+    function updateTrimCustomText(trimKey, field, val) {
+      if (!app.courseData.trimesters[trimKey].customTexts) return;
+      app.courseData.trimesters[trimKey].customTexts[field] = val;
+      saveCourseToDB();
+    }
+
+    function updateSheetTitle(field, val) {
+      if (!app.courseData.sheetTitles) return;
+      app.courseData.sheetTitles[field] = val;
       saveCourseToDB();
     }
 
@@ -3091,7 +3201,69 @@
     function openPrintModal() {
       const m = document.getElementById('printModal');
       const instSpan = document.getElementById('printModalInstName');
+      const optBox = document.getElementById('printModalOptions');
       if (instSpan) instSpan.textContent = app.institution || DEFAULT_INSTITUTION;
+
+      if (optBox) {
+        if (app.activeSheet.endsWith('_notas')) {
+          const trimKey = getActiveTrimKey();
+          const tName = TRIM_NAMES[trimKey];
+          optBox.innerHTML = `
+            <button
+              type="button"
+              onclick="printSingleSection('cuadro1')"
+              class="w-full p-3 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-left transition"
+            >
+              <div class="text-xs font-extrabold text-emerald-900">📊 Imprimir solo Cuadro 1 — Calificaciones (${tName})</div>
+              <div class="text-[11px] text-emerald-700">1 cuadro en su propia página limpia (Ser, Saber, Hacer, Auto y Nota Final).</div>
+            </button>
+            <button
+              type="button"
+              onclick="printSingleSection('cuadro2')"
+              class="w-full p-3 rounded-xl border border-indigo-300 bg-indigo-50 hover:bg-indigo-100 text-left transition"
+            >
+              <div class="text-xs font-extrabold text-indigo-900">👨‍👩‍👧 Imprimir solo Cuadro 2 — Seguimiento para Padres (${tName})</div>
+              <div class="text-[11px] text-indigo-700">1 cuadro en su propia página con cumplimiento de tareas y exámenes.</div>
+            </button>
+            <button
+              type="button"
+              onclick="printSingleSection('cuadro3')"
+              class="w-full p-3 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-left transition"
+            >
+              <div class="text-xs font-extrabold text-amber-900">📈 Imprimir solo Cuadro 3 — Reporte Trimestral (${tName})</div>
+              <div class="text-[11px] text-amber-800">1 cuadro en su propia página con promedios, estado y diagnóstico.</div>
+            </button>
+            <button
+              type="button"
+              onclick="executePrint('dossier')"
+              class="w-full p-3 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-left transition"
+            >
+              <div class="text-xs font-extrabold text-slate-900">📚 Imprimir Dossier Completo del Curso (1 cuadro por página)</div>
+              <div class="text-[11px] text-slate-600">Genera todas las hojas separadas automáticamente con salto de página.</div>
+            </button>
+          `;
+        } else {
+          optBox.innerHTML = `
+            <button
+              type="button"
+              onclick="executePrint('current')"
+              class="w-full p-3 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-left transition"
+            >
+              <div class="text-xs font-extrabold text-emerald-900">📄 Imprimir Pestaña Actual</div>
+              <div class="text-[11px] text-emerald-700">Imprime exactamente la tabla que estás viendo ahora mismo en formato horizontal.</div>
+            </button>
+            <button
+              type="button"
+              onclick="executePrint('dossier')"
+              class="w-full p-3 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-left transition"
+            >
+              <div class="text-xs font-extrabold text-slate-900">📚 Imprimir Dossier Completo del Curso (1 cuadro por página)</div>
+              <div class="text-[11px] text-slate-600">Incluye Nómina, 1°, 2° y 3° Trimestre (Notas y Asistencia) y Consolidado Anual.</div>
+            </button>
+          `;
+        }
+      }
+
       m.classList.remove('hidden');
       m.classList.add('flex');
     }
@@ -3100,6 +3272,42 @@
       const m = document.getElementById('printModal');
       m.classList.add('hidden');
       m.classList.remove('flex');
+    }
+
+    function printSingleSection(sectionId) {
+      closePrintModal();
+      const instName = app.institution || DEFAULT_INSTITUTION;
+      document.getElementById('printInstTitle').textContent = instName.toUpperCase();
+      document.getElementById('printFooterInst').textContent = instName;
+      document.getElementById('printCourseInfo').textContent = `Materia: ${app.currentSubject} · Curso: ${app.currentCourse}`;
+      document.getElementById('printFooterDate').textContent = new Date().toLocaleDateString('es-BO');
+
+      const prevView = app.viewMode;
+      if (app.viewMode !== 'table') {
+        app.viewMode = 'table';
+        renderActiveSheet();
+      }
+
+      const allBlocks = ['block-cuadro1', 'block-cuadro2', 'block-cuadro3'];
+      const hiddenEls = [];
+      allBlocks.forEach(id => {
+        if (id !== `block-${sectionId}`) {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.add('hidden');
+            hiddenEls.push(el);
+          }
+        }
+      });
+
+      setTimeout(() => {
+        window.print();
+        hiddenEls.forEach(el => el.classList.remove('hidden'));
+        if (prevView !== 'table') {
+          app.viewMode = prevView;
+          renderActiveSheet();
+        }
+      }, 200);
     }
 
     function executePrint(mode) {
@@ -3111,7 +3319,18 @@
       document.getElementById('printFooterDate').textContent = new Date().toLocaleDateString('es-BO');
 
       if (mode === 'current') {
-        setTimeout(() => window.print(), 150);
+        const prevView = app.viewMode;
+        if (app.viewMode !== 'table') {
+          app.viewMode = 'table';
+          renderActiveSheet();
+        }
+        setTimeout(() => {
+          window.print();
+          if (prevView !== 'table') {
+            app.viewMode = prevView;
+            renderActiveSheet();
+          }
+        }, 200);
       } else {
         const main = document.getElementById('mainWorkspace');
         const originalHtml = main.innerHTML;
@@ -3126,6 +3345,9 @@
             <div class="print-page-break">${renderAnnualGradesView()}</div>
           </div>
         `;
+        main.querySelectorAll('#block-cuadro2, #block-cuadro3').forEach(el => {
+          el.classList.add('print-page-break');
+        });
         setTimeout(() => {
           window.print();
           app.viewMode = prevView;
@@ -3237,7 +3459,13 @@
             'Autoeval (/5)', 'Nota Final (/100)', 'Nivel'
           ];
           wsN.addRow([`${instName} — ${TRIM_NAMES[tk]} · ${app.currentSubject} (${app.currentCourse})`]);
-          wsN.addRow(headerN);
+          const hdrRow = wsN.addRow(headerN);
+          hdrRow.height = 75;
+          hdrRow.eachCell((cell, colNumber) => {
+            if (colNumber > 2) {
+              cell.alignment = { textRotation: 90, horizontal: 'center', vertical: 'bottom' };
+            }
+          });
 
           app.courseData.students.forEach((st, i) => {
             const c = calculateStudentTrimesterGrades(tData, st.uid);
@@ -3265,7 +3493,13 @@
           }
           sesHeaders.push('A', 'T', 'L', 'F', '% Asistencia', 'SER Col.1');
           wsA.addRow([`${instName} — Asistencia ${TRIM_NAMES[tk]} · ${app.currentSubject} (${app.currentCourse})`]);
-          wsA.addRow(dateHeaders);
+          const dRow = wsA.addRow(dateHeaders);
+          dRow.height = 48;
+          dRow.eachCell((cell, colNumber) => {
+            if (colNumber > 2) {
+              cell.alignment = { textRotation: 90, horizontal: 'center', vertical: 'middle' };
+            }
+          });
           wsA.addRow(sesHeaders);
 
           app.courseData.students.forEach((st, i) => {
