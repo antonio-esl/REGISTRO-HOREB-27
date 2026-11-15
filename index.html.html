@@ -1,0 +1,3359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Cuaderno Pedagógico Digital — Colegio Evangélico Horeb</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fuente Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- ExcelJS (carga diferida para no bloquear la vista previa) -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+
+  <style>
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+    }
+
+    .safe-bottom-nav {
+      padding-bottom: calc(0.45rem + env(safe-area-inset-bottom));
+    }
+
+    /* Evita el auto-zoom de Safari en iPhone al tocar inputs */
+    @media (max-width: 767px) {
+      input[type="text"],
+      input[type="tel"],
+      input[type="number"],
+      input[type="date"],
+      select {
+        font-size: 16px !important;
+      }
+    }
+
+    /* Scrollbars estilizados */
+    .sheet-scroll {
+      -webkit-overflow-scrolling: touch;
+    }
+    .sheet-scroll::-webkit-scrollbar {
+      height: 9px;
+      width: 9px;
+    }
+    .sheet-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 8px;
+    }
+    .sheet-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 8px;
+      border: 2px solid #f1f5f9;
+    }
+    .sheet-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Sombras para columnas fijas */
+    .sticky-left-shadow {
+      box-shadow: 4px 0 8px -2px rgba(15, 23, 42, 0.08);
+    }
+    .sticky-right-shadow {
+      box-shadow: -4px 0 8px -2px rgba(15, 23, 42, 0.08);
+    }
+
+    /* Quitar flechas de inputs numéricos */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Botones táctiles */
+    .tap-btn {
+      transition: transform 0.08s ease, background-color 0.15s ease, border-color 0.15s ease;
+      user-select: none;
+    }
+    .tap-btn:active {
+      transform: scale(0.93);
+    }
+
+    /* Estilos específicos para Impresión / PDF en PC, iPad y iPhone */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 10mm;
+      }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10px !important;
+        padding-bottom: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .sheet-scroll {
+        overflow: visible !important;
+        max-height: none !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto;
+      }
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+      }
+      th, td {
+        position: static !important;
+        box-shadow: none !important;
+        border: 1px solid #94a3b8 !important;
+        padding: 3px 4px !important;
+      }
+      .print-page-break {
+        page-break-before: always;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ENCABEZADO SOLO PARA IMPRESIÓN / PDF -->
+  <div id="printHeader" class="hidden print-only border-b-2 border-slate-800 pb-3 mb-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 id="printInstTitle" class="text-lg font-black uppercase tracking-wide">COLEGIO EVANGÉLICO HOREB</h1>
+        <p id="printSubTitle" class="text-xs font-semibold text-slate-700">Registro Pedagógico Oficial — Secundaria</p>
+      </div>
+      <div class="text-right text-xs">
+        <p id="printCourseInfo" class="font-bold">Materia: Literatura · Curso: 1ro de Secundaria</p>
+        <p id="printDateInfo" class="text-slate-600">Gestión Escolar 2026</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRA SUPERIOR PRINCIPAL -->
+  <header class="no-print bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 shadow-md">
+    <div class="max-w-[1720px] mx-auto px-3 sm:px-5 py-2 sm:py-2.5">
+      <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2">
+
+        <!-- Identidad Institucional Editable + Switch de Materia -->
+        <div class="flex items-center justify-between sm:justify-start gap-2.5 min-w-0">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center font-black text-base sm:text-lg shadow-inner shrink-0">
+              H
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <!-- Título Institucional Editable -->
+                <div class="relative inline-flex items-center group max-w-full">
+                  <input
+                    id="institutionInput"
+                    type="text"
+                    value="Colegio Evangélico Horeb"
+                    aria-label="Editar nombre de la institución"
+                    title="Haz clic para editar el nombre de la institución"
+                    class="bg-slate-800/70 hover:bg-slate-800 focus:bg-slate-800 text-sm sm:text-base md:text-lg font-extrabold text-white border border-dashed border-slate-600 hover:border-emerald-400 focus:border-solid focus:border-emerald-400 rounded-lg pl-2.5 pr-7 py-0.5 focus:outline-none w-56 sm:w-68 md:w-76 transition"
+                  />
+                  <span class="pointer-events-none absolute right-2 text-[11px] text-slate-400 group-hover:text-emerald-300" title="Editable">✏️</span>
+                </div>
+
+                <!-- Switch de Materia: Literatura (1°-6°) / Inglés (4°-6°) -->
+                <div class="inline-flex rounded-xl bg-slate-800 p-0.5 sm:p-1 border border-slate-700 shrink-0">
+                  <button
+                    type="button"
+                    id="btnSubjLiteratura"
+                    onclick="switchSubject('Literatura')"
+                    class="px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition bg-emerald-600 text-white shadow-xs"
+                  >
+                    📚 Literatura
+                  </button>
+                  <button
+                    type="button"
+                    id="btnSubjIngles"
+                    onclick="switchSubject('Inglés')"
+                    class="px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition text-slate-300 hover:text-white"
+                  >
+                    🇬🇧 Inglés
+                  </button>
+                </div>
+              </div>
+              <p class="hidden sm:block text-[11px] text-slate-400 mt-0.5">
+                Ser (10) + Saber (45) + Hacer (40) + Autoeval. (5) = <strong class="text-emerald-400">100 pts</strong> · Nota mínima de aprobación: <strong class="text-amber-300">51 pts</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Herramientas Rápidas -->
+        <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 sm:pb-0">
+          <!-- Estado Offline / Online -->
+          <button
+            type="button"
+            id="syncStatusBtn"
+            onclick="openSyncModal()"
+            class="px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 flex items-center gap-1.5 shrink-0 transition"
+            title="Estado de guardado local y sincronización entre PC, iPad y iPhone"
+          >
+            <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span id="syncLabel">Offline Listo</span>
+          </button>
+
+          <!-- Botón Modo Captura Padres -->
+          <button
+            type="button"
+            id="btnCaptureMode"
+            onclick="toggleCaptureMode()"
+            class="px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-xs flex items-center gap-1.5 shrink-0 transition"
+            title="Limpia la vista del Cuadro para Padres para tomar captura de pantalla"
+          >
+            <span>📸</span>
+            <span id="captureModeLabel">Captura Padres</span>
+          </button>
+
+          <!-- Botón Imprimir / PDF -->
+          <button
+            type="button"
+            onclick="openPrintModal()"
+            class="px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 flex items-center gap-1.5 shrink-0 transition"
+          >
+            <span>🖨️</span>
+            <span>PDF</span>
+          </button>
+
+          <!-- Exportar a Google Sheets / Excel -->
+          <button
+            type="button"
+            onclick="exportCourseToXLSX()"
+            class="px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs flex items-center gap-1.5 shrink-0 transition"
+          >
+            <span>📊</span>
+            <span>Excel / Sheets</span>
+          </button>
+
+          <!-- Cargar Ejemplo -->
+          <button
+            type="button"
+            onclick="loadDemoData()"
+            class="px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 shrink-0 transition"
+            title="Cargar datos de demostración en el curso actual"
+          >
+            ✨ Ejemplo
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- PANEL DE CURSO, FECHAS DEL TRIMESTRE Y CONTROLES DINÁMICOS -->
+  <section id="controlRibbon" class="no-print max-w-[1720px] w-full mx-auto px-3 sm:px-5 pt-2.5 sm:pt-3">
+    <div class="bg-white rounded-2xl border border-slate-200 p-2.5 sm:p-3 shadow-xs space-y-2.5">
+
+      <!-- Fila 1: Selector de Curso + Selector de Vista Dispositivo + Fechas + Buscador -->
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+        <!-- Botones de Curso -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 lg:pb-0" id="courseSelectorBar">
+          <!-- Generado por JS según Literatura (1°-6°) o Inglés (4°-6°) -->
+        </div>
+
+        <!-- Selector de Vista (Auto / Tarjetas iPhone / Tabla iPad-Laptop), Fechas y Buscador -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Switch Adaptativo de Dispositivo -->
+          <div class="inline-flex rounded-xl bg-slate-100 p-0.5 border border-slate-200" title="Adapta la vista para iPhone (Tarjetas) o iPad/Laptop (Tabla)">
+            <button
+              type="button"
+              id="btnViewAuto"
+              onclick="setViewMode('auto')"
+              class="px-2 py-1 rounded-lg text-[11px] font-bold transition bg-slate-900 text-white"
+            >
+              Auto
+            </button>
+            <button
+              type="button"
+              id="btnViewCards"
+              onclick="setViewMode('cards')"
+              class="px-2 py-1 rounded-lg text-[11px] font-bold transition text-slate-600 hover:text-slate-900"
+            >
+              📱 Tarjetas
+            </button>
+            <button
+              type="button"
+              id="btnViewTable"
+              onclick="setViewMode('table')"
+              class="px-2 py-1 rounded-lg text-[11px] font-bold transition text-slate-600 hover:text-slate-900"
+            >
+              📊 Tabla
+            </button>
+          </div>
+
+          <div id="trimesterDateBox" class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1">
+            <span class="text-[11px] font-bold text-slate-500">Del:</span>
+            <input
+              id="trimStartInput"
+              type="date"
+              onchange="updateTrimesterDates()"
+              class="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none w-28 sm:w-auto"
+            />
+            <span class="text-[11px] font-bold text-slate-500">Al:</span>
+            <input
+              id="trimEndInput"
+              type="date"
+              onchange="updateTrimesterDates()"
+              class="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none w-28 sm:w-auto"
+            />
+          </div>
+
+          <div class="relative flex-1 sm:flex-initial sm:w-52">
+            <input
+              id="searchInput"
+              type="text"
+              oninput="handleSearch(this.value)"
+              placeholder="Buscar estudiante..."
+              class="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fila 2: Controles Dinámicos según la pestaña activa -->
+      <div id="dynamicToolsBar" class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+        <!-- Generado dinámicamente según la vista -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ÁREA PRINCIPAL DE CONTENIDO -->
+  <main id="mainWorkspace" class="max-w-[1720px] w-full mx-auto px-3 sm:px-5 py-3 flex-1 space-y-5">
+    <!-- Renderizado dinámico por JS -->
+  </main>
+
+  <!-- PIE DE FIRMAS SOLO PARA IMPRESIÓN -->
+  <footer class="hidden print-only mt-10 pt-6">
+    <div class="grid grid-cols-3 gap-8 text-center text-xs">
+      <div>
+        <div class="border-t border-slate-700 pt-1.5 font-bold">Firma del Docente</div>
+        <div id="printFooterInst" class="text-slate-500">Colegio Evangélico Horeb</div>
+      </div>
+      <div>
+        <div class="border-t border-slate-700 pt-1.5 font-bold">V° B° Dirección</div>
+        <div class="text-slate-500">Sello de la Unidad Educativa</div>
+      </div>
+      <div>
+        <div class="border-t border-slate-700 pt-1.5 font-bold">Fecha de Entrega</div>
+        <div id="printFooterDate" class="text-slate-500">____ / ____ / 2026</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- BARRA INFERIOR DE PESTAÑAS ESTILO GOOGLE SHEETS -->
+  <nav class="no-print safe-bottom-nav fixed bottom-0 inset-x-0 z-40 bg-slate-900 border-t border-slate-700 px-2 sm:px-4 pt-1.5 shadow-lg">
+    <div class="max-w-[1720px] mx-auto flex items-center justify-between gap-2">
+      <div id="bottomSheetTabs" class="flex items-center gap-1 overflow-x-auto py-0.5">
+        <!-- Pestañas generadas dinámicamente -->
+      </div>
+      <div id="bottomSummaryBadge" class="hidden md:flex items-center gap-2 text-[11px] font-semibold text-slate-300 shrink-0">
+        <span>35 alumnos base · Ampliable</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MODAL: IMPRIMIR / GENERAR PDF -->
+  <div id="printModal" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-slate-900">🖨️ Imprimir o Guardar como PDF</h3>
+        <button type="button" onclick="closePrintModal()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">✕</button>
+      </div>
+      <p class="text-xs text-slate-600">
+        Configurado en formato horizontal limpio con encabezado de <strong id="printModalInstName">Colegio Evangélico Horeb</strong> y espacio para firma y sello de dirección (compatible con iPad, iPhone y PC).
+      </p>
+      <div class="space-y-2">
+        <button
+          type="button"
+          onclick="executePrint('current')"
+          class="w-full p-3 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-left transition"
+        >
+          <div class="text-xs font-extrabold text-emerald-900">📄 Imprimir Pestaña Actual</div>
+          <div class="text-[11px] text-emerald-700">Imprime exactamente la hoja que estás viendo ahora mismo.</div>
+        </button>
+        <button
+          type="button"
+          onclick="executePrint('dossier')"
+          class="w-full p-3 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-left transition"
+        >
+          <div class="text-xs font-extrabold text-slate-900">📚 Imprimir Dossier Completo del Curso</div>
+          <div class="text-[11px] text-slate-600">Incluye Nómina, 1°, 2° y 3° Trimestre (Notas y Asistencia) y Consolidado Anual.</div>
+        </button>
+      </div>
+      <div class="flex justify-end">
+        <button type="button" onclick="closePrintModal()" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SINCRONIZACIÓN HÍBRIDA OFFLINE / ONLINE Y RESPALDO -->
+  <div id="syncModal" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-slate-900">🔄 Sincronización Híbrida y Respaldo (PC · iPad · iPhone)</h3>
+        <button type="button" onclick="closeSyncModal()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">✕</button>
+      </div>
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 space-y-1">
+        <p class="font-bold">✅ Funcionamiento 100% Sin Internet (Offline):</p>
+        <p>Todos tus cambios se guardan automáticamente en la base de datos interna de tu dispositivo (<code>IndexedDB</code>). Puedes trabajar en el aula en tu iPad sin internet y descargar o transferir tu respaldo cuando quieras.</p>
+      </div>
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-700">Clave de Sincronización Docente (opcional):</label>
+        <div class="flex gap-2">
+          <input
+            id="syncKeyInput"
+            type="text"
+            placeholder="Ej: HOREB-PROF-2026"
+            class="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          <button
+            type="button"
+            onclick="saveSyncKey()"
+            class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800"
+          >
+            Vincular
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+        <button
+          type="button"
+          onclick="exportBackupJSON()"
+          class="px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white text-center transition"
+        >
+          ⬇️ Descargar Respaldo (.json)
+        </button>
+        <label class="px-3 py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 text-center cursor-pointer transition">
+          ⬆️ Restaurar Respaldo (.json)
+          <input type="file" accept=".json" onchange="importBackupJSON(event)" class="hidden" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST DE NOTIFICACIÓN -->
+  <div id="toast" class="no-print fixed bottom-16 right-4 z-50 transform translate-y-16 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2">
+      <span id="toastDot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+      <span id="toastText">Guardado</span>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * CONFIGURACIÓN MAESTRA DEL CUADERNO PEDAGÓGICO — COLEGIO EVANGÉLICO HOREB
+     * ============================================================================
+     */
+    const DEFAULT_INSTITUTION = 'Colegio Evangélico Horeb';
+
+    const SUBJECT_COURSES = {
+      'Literatura': [
+        '1ro de Secundaria',
+        '2do de Secundaria',
+        '3ro de Secundaria',
+        '4to de Secundaria',
+        '5to de Secundaria',
+        '6to de Secundaria'
+      ],
+      'Inglés': [
+        '4to de Secundaria',
+        '5to de Secundaria',
+        '6to de Secundaria'
+      ]
+    };
+
+    const SHEET_TABS = [
+      { id: 'nomina', label: '📋 Nómina' },
+      { id: 't1_notas', label: '1° Trim · Notas' },
+      { id: 't1_asist', label: '1° Trim · Asistencia' },
+      { id: 't2_notas', label: '2° Trim · Notas' },
+      { id: 't2_asist', label: '2° Trim · Asistencia' },
+      { id: 't3_notas', label: '3° Trim · Notas' },
+      { id: 't3_asist', label: '3° Trim · Asistencia' },
+      { id: 'anual', label: '🏆 Notas Anuales' }
+    ];
+
+    const TRIM_NAMES = {
+      t1: 'Primer Trimestre',
+      t2: 'Segundo Trimestre',
+      t3: 'Tercer Trimestre'
+    };
+
+    const INITIAL_STUDENTS = 35;
+    const SER_COLUMNS = 4;
+    const MAX_EXAMS = 10;
+    const MAX_TASKS = 20;
+
+    // Semanas dinámicas por trimestre (por defecto 12 semanas, ampliable hasta 20)
+    const DEFAULT_WEEKS = 12;
+    const MIN_WEEKS = 1;
+    const MAX_WEEKS = 20;
+    const SESSIONS_PER_WEEK = 3;
+
+    // Estados de asistencia: A (100%), T (Tarde >10 min = 50%), L (Licencia = 100%), F (Falta = 0%)
+    const ATT_STATES = ['', 'A', 'T', 'L', 'F'];
+
+    // Almacenamiento local seguro (evita bloqueo en iframes aislados de vista previa)
+    function safeStorageGet(key) {
+      try {
+        return window.localStorage ? window.localStorage.getItem(key) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function safeStorageSet(key, value) {
+      try {
+        if (window.localStorage) window.localStorage.setItem(key, value);
+      } catch (_) {}
+    }
+
+    // Estado global en memoria
+    let app = {
+      institution: DEFAULT_INSTITUTION,
+      currentSubject: 'Literatura',
+      currentCourse: '1ro de Secundaria',
+      activeSheet: 't1_notas',
+      searchQuery: '',
+      captureMode: false,
+      viewMode: 'auto', // 'auto' | 'cards' | 'table'
+      mobileAttSession: 0,
+      syncKey: safeStorageGet('horeb_sync_key') || '',
+      courseData: null
+    };
+
+    function isMobileCardLayout() {
+      if (app.viewMode === 'cards') return true;
+      if (app.viewMode === 'table') return false;
+      return typeof window !== 'undefined' && window.innerWidth < 768;
+    }
+
+    function setViewMode(mode) {
+      app.viewMode = mode;
+      renderTopControls();
+      renderActiveSheet();
+      const labels = {
+        auto: 'Vista Automática según pantalla',
+        cards: 'Vista Tarjetas (ideal para iPhone)',
+        table: 'Vista Tabla Completa (iPad / Laptop)'
+      };
+      showToast(labels[mode] || 'Vista actualizada', 'info');
+    }
+
+    function formatPhoneHref(phone) {
+      return String(phone || '').replace(/[^\d+]/g, '');
+    }
+
+    function formatWhatsAppUrl(phone) {
+      let digits = String(phone || '').replace(/\D/g, '');
+      if (!digits) return '';
+      if (digits.length === 8 && (digits.startsWith('6') || digits.startsWith('7'))) {
+        digits = '591' + digits;
+      }
+      return `https://wa.me/${digits}`;
+    }
+
+    const memoryStore = {};
+    const DB_NAME = 'HorebCuadernoPedagogicoDB_v4';
+    const STORE_NAME = 'courses';
+    let dbInstance = null;
+    let saveTimer = null;
+
+    function generateUid() {
+      return 'stu_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    let toastTimeout = null;
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const txt = document.getElementById('toastText');
+      const dot = document.getElementById('toastDot');
+      if (!toast || !txt || !dot) return;
+
+      txt.textContent = msg;
+      dot.className = 'w-2 h-2 rounded-full ' + (
+        type === 'error' ? 'bg-rose-400' :
+        type === 'info' ? 'bg-sky-400' : 'bg-emerald-400'
+      );
+
+      toast.classList.remove('translate-y-16', 'opacity-0');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('translate-y-16', 'opacity-0');
+      }, 2800);
+    }
+
+    /**
+     * ============================================================================
+     * ESTRUCTURAS DE DATOS POR CURSO Y TRIMESTRE
+     * ============================================================================
+     */
+    function createEmptyTrimesterData() {
+      const maxTotalSessions = MAX_WEEKS * SESSIONS_PER_WEEK;
+      return {
+        dateStart: '',
+        dateEnd: '',
+        weekCount: DEFAULT_WEEKS,
+        sessionDates: Array(maxTotalSessions).fill(''),
+        serLabels: [
+          'Asistencia',
+          'Responsabilidad',
+          'Dedicación',
+          'Respeto'
+        ],
+        examCount: 4,
+        examLabels: Array.from({ length: MAX_EXAMS }, (_, i) => `Ex. ${i + 1}`),
+        taskCount: 6,
+        taskLabels: Array.from({ length: MAX_TASKS }, (_, i) => `Act. ${i + 1}`),
+        gradesByUid: {},
+        attendanceByUid: {}
+      };
+    }
+
+    function createEmptyCourseData(subject, course) {
+      const students = Array.from({ length: INITIAL_STUDENTS }, () => ({
+        uid: generateUid(),
+        name: '',
+        parentPhone: '',
+        status: 'Activo'
+      }));
+
+      const data = {
+        key: `${subject}__${course}`,
+        subject,
+        course,
+        students,
+        trimesters: {
+          t1: createEmptyTrimesterData(),
+          t2: createEmptyTrimesterData(),
+          t3: createEmptyTrimesterData()
+        }
+      };
+
+      students.forEach(st => {
+        ensureStudentTrimRecords(data.trimesters.t1, st.uid);
+        ensureStudentTrimRecords(data.trimesters.t2, st.uid);
+        ensureStudentTrimRecords(data.trimesters.t3, st.uid);
+      });
+
+      return data;
+    }
+
+    function ensureStudentTrimRecords(tData, uid) {
+      const maxTotalSessions = MAX_WEEKS * SESSIONS_PER_WEEK;
+      if (!tData.weekCount || tData.weekCount < MIN_WEEKS) {
+        tData.weekCount = DEFAULT_WEEKS;
+      }
+      if (!Array.isArray(tData.sessionDates)) {
+        tData.sessionDates = Array(maxTotalSessions).fill('');
+      } else if (tData.sessionDates.length < maxTotalSessions) {
+        tData.sessionDates = tData.sessionDates.concat(Array(maxTotalSessions - tData.sessionDates.length).fill(''));
+      }
+      if (!tData.serLabels || tData.serLabels.length < SER_COLUMNS) {
+        tData.serLabels = ['Asistencia', 'Responsabilidad', 'Dedicación', 'Respeto'];
+      }
+      if (!tData.gradesByUid[uid]) {
+        tData.gradesByUid[uid] = {
+          ser: Array(SER_COLUMNS).fill(''),
+          serManualOverride: [false, false, false, true],
+          exams: Array(MAX_EXAMS).fill(''),
+          tasks: Array(MAX_TASKS).fill(''),
+          autoEval: ''
+        };
+      } else {
+        const g = tData.gradesByUid[uid];
+        if (!g.ser || g.ser.length < SER_COLUMNS) g.ser = Array(SER_COLUMNS).fill('');
+        if (!g.serManualOverride) g.serManualOverride = [false, false, false, true];
+        if (!g.exams || g.exams.length < MAX_EXAMS) g.exams = Array(MAX_EXAMS).fill('');
+        if (!g.tasks || g.tasks.length < MAX_TASKS) g.tasks = Array(MAX_TASKS).fill('');
+      }
+
+      if (!tData.attendanceByUid[uid]) {
+        tData.attendanceByUid[uid] = Array(maxTotalSessions).fill('');
+      } else if (tData.attendanceByUid[uid].length < maxTotalSessions) {
+        tData.attendanceByUid[uid] = tData.attendanceByUid[uid].concat(
+          Array(maxTotalSessions - tData.attendanceByUid[uid].length).fill('')
+        );
+      }
+    }
+
+    /**
+     * ============================================================================
+     * PERSISTENCIA SEGURA OFFLINE (IndexedDB + Caché en Memoria)
+     * ============================================================================
+     */
+    function openDatabase() {
+      return new Promise((resolve) => {
+        if (dbInstance) return resolve(dbInstance);
+        try {
+          if (!window.indexedDB) return resolve(null);
+          const req = window.indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME, { keyPath: 'key' });
+            }
+          };
+          req.onsuccess = (e) => {
+            dbInstance = e.target.result;
+            resolve(dbInstance);
+          };
+          req.onerror = () => resolve(null);
+        } catch (_) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function loadCourseFromDB(subject, course) {
+      const key = `${subject}__${course}`;
+      if (memoryStore[key]) {
+        normalizeCourseData(memoryStore[key]);
+        return memoryStore[key];
+      }
+
+      try {
+        const db = await openDatabase();
+        if (db) {
+          const found = await new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const req = tx.objectStore(STORE_NAME).get(key);
+            req.onsuccess = () => resolve(req.result ? req.result.data : null);
+            req.onerror = () => resolve(null);
+          });
+          if (found) {
+            normalizeCourseData(found);
+            memoryStore[key] = found;
+            return found;
+          }
+        }
+      } catch (_) {}
+
+      const fresh = createEmptyCourseData(subject, course);
+      memoryStore[key] = fresh;
+      return fresh;
+    }
+
+    function normalizeCourseData(cData) {
+      if (Array.isArray(cData.students)) {
+        cData.students.forEach(st => {
+          if (typeof st.parentPhone === 'undefined') st.parentPhone = '';
+        });
+      }
+      ['t1', 't2', 't3'].forEach(tk => {
+        if (!cData.trimesters[tk]) cData.trimesters[tk] = createEmptyTrimesterData();
+        cData.students.forEach(st => ensureStudentTrimRecords(cData.trimesters[tk], st.uid));
+      });
+    }
+
+    function saveCourseToDB() {
+      if (!app.courseData) return;
+      const key = `${app.currentSubject}__${app.currentCourse}`;
+      memoryStore[key] = app.courseData;
+      updateSyncStatusBadge('saving');
+
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        try {
+          const db = await openDatabase();
+          if (db) {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).put({ key, data: app.courseData });
+          }
+        } catch (_) {}
+        safeStorageSet('horeb_institution', app.institution);
+        updateSyncStatusBadge('saved');
+      }, 220);
+    }
+
+    function updateSyncStatusBadge(state) {
+      const dot = document.getElementById('syncDot');
+      const label = document.getElementById('syncLabel');
+      if (!dot || !label) return;
+
+      const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+      if (state === 'saving') {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+        label.textContent = 'Guardando...';
+      } else if (isOnline) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        label.textContent = app.syncKey ? `Sincronizado (${app.syncKey})` : 'Online · Guardado';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-sky-400';
+        label.textContent = 'Offline · Guardado Local';
+      }
+    }
+
+    /**
+     * ============================================================================
+     * CÁLCULOS PEDAGÓGICOS Y DE ASISTENCIA (REDONDEADOS A ENTEROS SOBRE 100 PTS)
+     * ============================================================================
+     */
+    function calculateAttendanceStats(tData, uid) {
+      ensureStudentTrimRecords(tData, uid);
+      const arr = tData.attendanceByUid[uid];
+      const activeSessions = (tData.weekCount || DEFAULT_WEEKS) * SESSIONS_PER_WEEK;
+
+      let countA = 0, countT = 0, countL = 0, countF = 0;
+      for (let i = 0; i < activeSessions; i++) {
+        const v = arr[i];
+        if (v === 'A') countA++;
+        else if (v === 'T') countT++;
+        else if (v === 'L') countL++;
+        else if (v === 'F') countF++;
+      }
+
+      const marked = countA + countT + countL + countF;
+      let pct = 0;
+      if (marked > 0) {
+        const weighted = countA + countL + (countT * 0.5);
+        pct = Math.round((weighted / marked) * 100);
+        if (pct > 100) pct = 100;
+      }
+
+      let ser1Scale10 = '';
+      if (marked > 0) {
+        ser1Scale10 = Math.min(10, Math.max(1, Math.round(pct / 10)));
+      }
+
+      return { countA, countT, countL, countF, marked, pct, ser1Scale10 };
+    }
+
+    function calculateStudentTrimesterGrades(tData, uid) {
+      ensureStudentTrimRecords(tData, uid);
+      const g = tData.gradesByUid[uid];
+      const att = calculateAttendanceStats(tData, uid);
+
+      // 1. SABER (sobre 45 pts) — Redondeado entero
+      let saberSum = 0, saberCount = 0;
+      for (let i = 0; i < tData.examCount; i++) {
+        const val = parseFloat(g.exams[i]);
+        if (!isNaN(val) && g.exams[i] !== '') {
+          const clamped = Math.round(Math.min(45, Math.max(0, val)));
+          saberSum += clamped;
+          saberCount++;
+        }
+      }
+      const saberScore = saberCount > 0 ? Math.round(saberSum / saberCount) : 0;
+
+      // 2. HACER (sobre 40 pts) — Redondeado entero
+      let hacerSum = 0, hacerCount = 0;
+      for (let i = 0; i < tData.taskCount; i++) {
+        const val = parseFloat(g.tasks[i]);
+        if (!isNaN(val) && g.tasks[i] !== '') {
+          const clamped = Math.round(Math.min(40, Math.max(0, val)));
+          hacerSum += clamped;
+          hacerCount++;
+        }
+      }
+      const hacerScore = hacerCount > 0 ? Math.round(hacerSum / hacerCount) : 0;
+
+      // 3. SER (4 columnas sobre 10 pts) — Redondeado entero
+      const ser1Val = g.serManualOverride[0]
+        ? (g.ser[0] !== '' ? Math.round(Number(g.ser[0])) : '')
+        : (att.ser1Scale10 !== '' ? att.ser1Scale10 : (g.ser[0] !== '' ? Math.round(Number(g.ser[0])) : ''));
+
+      let autoSer2 = '';
+      if (hacerCount > 0) {
+        const avgTask40 = hacerSum / hacerCount;
+        autoSer2 = Math.min(10, Math.max(1, Math.round((avgTask40 / 40) * 10)));
+      }
+      const ser2Val = g.serManualOverride[1]
+        ? (g.ser[1] !== '' ? Math.round(Number(g.ser[1])) : '')
+        : (autoSer2 !== '' ? autoSer2 : (g.ser[1] !== '' ? Math.round(Number(g.ser[1])) : ''));
+
+      let autoSer3 = '';
+      if (saberCount > 0) {
+        const avgExam45 = saberSum / saberCount;
+        autoSer3 = Math.min(10, Math.max(1, Math.round((avgExam45 / 45) * 10)));
+      }
+      const ser3Val = g.serManualOverride[2]
+        ? (g.ser[2] !== '' ? Math.round(Number(g.ser[2])) : '')
+        : (autoSer3 !== '' ? autoSer3 : (g.ser[2] !== '' ? Math.round(Number(g.ser[2])) : ''));
+
+      const ser4Val = (g.ser[3] !== '' && g.ser[3] !== null && g.ser[3] !== undefined && !isNaN(Number(g.ser[3])))
+        ? Math.round(Number(g.ser[3]))
+        : '';
+
+      const serEffectiveValues = [ser1Val, ser2Val, ser3Val, ser4Val];
+      let serSum = 0, serCount = 0;
+      serEffectiveValues.forEach(v => {
+        const num = parseFloat(v);
+        if (!isNaN(num) && v !== '' && v !== null && v !== undefined) {
+          serSum += Math.round(Math.min(10, Math.max(0, num)));
+          serCount++;
+        }
+      });
+      const serScore = serCount > 0 ? Math.round(serSum / serCount) : 0;
+
+      // 4. AUTOEVALUACIÓN (sobre 5 pts) — Redondeado entero
+      const autoRaw = parseFloat(g.autoEval);
+      const autoScore = (!isNaN(autoRaw) && g.autoEval !== '') ? Math.round(Math.min(5, Math.max(0, autoRaw))) : 0;
+
+      const hasAnyData = serCount > 0 || saberCount > 0 || hacerCount > 0 || (!isNaN(autoRaw) && g.autoEval !== '');
+      const exactTotal = serScore + saberScore + hacerScore + autoScore;
+      const finalScore = hasAnyData ? Math.min(100, Math.round(exactTotal)) : 0;
+
+      let level = '—';
+      let levelBadge = 'bg-slate-100 text-slate-400';
+      if (hasAnyData) {
+        if (finalScore >= 85) {
+          level = 'DP';
+          levelBadge = 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+        } else if (finalScore >= 70) {
+          level = 'DO';
+          levelBadge = 'bg-sky-100 text-sky-800 border border-sky-300';
+        } else if (finalScore >= 51) {
+          level = 'DA';
+          levelBadge = 'bg-amber-100 text-amber-800 border border-amber-300';
+        } else {
+          level = 'ED';
+          levelBadge = 'bg-rose-100 text-rose-800 border border-rose-300';
+        }
+      }
+
+      return {
+        serEffectiveValues,
+        serScore,
+        saberScore,
+        hacerScore,
+        autoScore,
+        finalScore,
+        hasAnyData,
+        approved: hasAnyData && finalScore >= 51,
+        level,
+        levelBadge,
+        attPct: att.pct,
+        attMarked: att.marked
+      };
+    }
+
+    function getTaskParentCode(rawVal) {
+      if (rawVal === '' || rawVal === null || rawVal === undefined) {
+        return { code: '·', label: 'Sin calificar', cls: 'bg-slate-50 text-slate-300 border-slate-200' };
+      }
+      const n = parseFloat(rawVal);
+      if (isNaN(n)) return { code: '·', label: 'Sin calificar', cls: 'bg-slate-50 text-slate-300 border-slate-200' };
+      if (n >= 35) return { code: 'S', label: 'Sí presentó', cls: 'bg-emerald-500 text-white border-emerald-600 font-extrabold' };
+      if (n >= 15) return { code: 'I', label: 'Incompleto', cls: 'bg-amber-400 text-slate-950 border-amber-500 font-extrabold' };
+      if (n >= 1) return { code: 'T', label: 'Presentó tarde', cls: 'bg-violet-600 text-white border-violet-700 font-extrabold' };
+      return { code: 'N', label: 'No presentó', cls: 'bg-rose-500 text-white border-rose-600 font-extrabold' };
+    }
+
+    function getExamParentBadge(rawVal) {
+      if (rawVal === '' || rawVal === null || rawVal === undefined) {
+        return { text: '—', cls: 'bg-slate-50 text-slate-300 border-slate-200' };
+      }
+      const n = parseFloat(rawVal);
+      if (isNaN(n)) return { text: '—', cls: 'bg-slate-50 text-slate-300 border-slate-200' };
+      if (n >= 40) return { text: 'EXCELENTE', cls: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-extrabold' };
+      if (n >= 32) return { text: 'BUENO', cls: 'bg-sky-100 text-sky-800 border-sky-300 font-bold' };
+      if (n >= 23) return { text: 'REGULAR', cls: 'bg-amber-100 text-amber-800 border-amber-300 font-bold' };
+      return { text: 'MALO', cls: 'bg-rose-100 text-rose-800 border-rose-300 font-extrabold' };
+    }
+
+    /**
+     * ============================================================================
+     * NAVEGACIÓN DE MATERIA, CURSO Y PESTAÑAS
+     * ============================================================================
+     */
+    async function switchSubject(subject) {
+      if (app.currentSubject === subject) return;
+      app.currentSubject = subject;
+      const courses = SUBJECT_COURSES[subject];
+      if (!courses.includes(app.currentCourse)) {
+        app.currentCourse = courses[0];
+      }
+      app.courseData = await loadCourseFromDB(app.currentSubject, app.currentCourse);
+      renderTopControls();
+      renderBottomTabs();
+      renderActiveSheet();
+      showToast(`Materia cambiada a ${subject}`, 'info');
+    }
+
+    async function switchCourse(course) {
+      if (app.currentCourse === course) return;
+      app.currentCourse = course;
+      app.courseData = await loadCourseFromDB(app.currentSubject, app.currentCourse);
+      renderTopControls();
+      renderActiveSheet();
+    }
+
+    function switchSheet(sheetId) {
+      app.activeSheet = sheetId;
+      renderTopControls();
+      renderBottomTabs();
+      renderActiveSheet();
+    }
+
+    function handleSearch(val) {
+      app.searchQuery = val.trim().toLowerCase();
+      renderActiveSheet();
+    }
+
+    function toggleCaptureMode() {
+      app.captureMode = !app.captureMode;
+      const btn = document.getElementById('btnCaptureMode');
+      const lbl = document.getElementById('captureModeLabel');
+      if (app.captureMode) {
+        btn.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-amber-500 text-slate-950 shadow-xs flex items-center gap-1.5 shrink-0 transition';
+        lbl.textContent = 'Salir Captura';
+        if (!app.activeSheet.endsWith('_notas')) {
+          app.activeSheet = 't1_notas';
+          renderBottomTabs();
+        }
+      } else {
+        btn.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-xs flex items-center gap-1.5 shrink-0 transition';
+        lbl.textContent = 'Captura Padres';
+      }
+      renderTopControls();
+      renderActiveSheet();
+    }
+
+    /**
+     * ============================================================================
+     * RENDERIZADO DE CONTROLES SUPERIORES Y PESTAÑAS INFERIORES
+     * ============================================================================
+     */
+    function renderTopControls() {
+      const btnLit = document.getElementById('btnSubjLiteratura');
+      const btnIng = document.getElementById('btnSubjIngles');
+      if (btnLit && btnIng) {
+        btnLit.className = app.currentSubject === 'Literatura'
+          ? 'px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition bg-emerald-600 text-white shadow-xs'
+          : 'px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition text-slate-300 hover:text-white';
+        btnIng.className = app.currentSubject === 'Inglés'
+          ? 'px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition bg-indigo-600 text-white shadow-xs'
+          : 'px-2 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition text-slate-300 hover:text-white';
+      }
+
+      // Actualizar botones de vista (Auto / Tarjetas / Tabla)
+      ['auto', 'cards', 'table'].forEach(mode => {
+        const el = document.getElementById(`btnView${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
+        if (!el) return;
+        el.className = app.viewMode === mode
+          ? 'px-2 py-1 rounded-lg text-[11px] font-bold transition bg-slate-900 text-white'
+          : 'px-2 py-1 rounded-lg text-[11px] font-bold transition text-slate-600 hover:text-slate-900';
+      });
+
+      const courseBar = document.getElementById('courseSelectorBar');
+      const courses = SUBJECT_COURSES[app.currentSubject] || [];
+      courseBar.innerHTML = courses.map(c => {
+        const active = c === app.currentCourse;
+        const cls = active
+          ? 'bg-slate-900 text-white font-bold shadow-xs'
+          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold';
+        return `<button type="button" onclick="switchCourse('${c}')" class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs whitespace-nowrap shrink-0 transition ${cls}">${c}</button>`;
+      }).join('');
+
+      const trimKey = getActiveTrimKey();
+      const dateBox = document.getElementById('trimesterDateBox');
+      if (trimKey && app.courseData) {
+        dateBox.classList.remove('hidden');
+        document.getElementById('trimStartInput').value = app.courseData.trimesters[trimKey].dateStart || '';
+        document.getElementById('trimEndInput').value = app.courseData.trimesters[trimKey].dateEnd || '';
+      } else {
+        dateBox.classList.add('hidden');
+      }
+
+      const toolsBar = document.getElementById('dynamicToolsBar');
+      if (app.activeSheet === 'nomina') {
+        toolsBar.innerHTML = `
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="addStudentAtEnd()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition">
+              + Agregar Estudiante
+            </button>
+            <button type="button" onclick="sortStudentsAlphabetically()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 transition">
+              🔤 Ordenar A–Z
+            </button>
+            ${app.currentSubject === 'Inglés' ? `
+              <button type="button" onclick="syncRosterFromLiteratura()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 transition">
+                🔄 Copiar lista desde Literatura (${escapeHtml(app.currentCourse)})
+              </button>
+            ` : ''}
+          </div>
+          <div class="text-[11px] text-slate-500">
+            Total en nómina: <strong class="text-slate-800">${app.courseData.students.length} estudiantes</strong> · Puedes pegar nombres y celulares desde Excel/Sheets.
+          </div>
+        `;
+      } else if (app.activeSheet.endsWith('_notas')) {
+        const tData = app.courseData.trimesters[trimKey];
+        toolsBar.innerHTML = `
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <!-- Control dinámico de Saber -->
+            <div class="inline-flex items-center gap-1.5 bg-sky-50 border border-sky-200 rounded-xl px-2.5 py-1">
+              <span class="text-[11px] font-extrabold text-sky-900">Saber:</span>
+              <button type="button" onclick="changeExamCount(-1)" class="w-6 h-6 rounded-lg bg-white border border-sky-300 text-sky-900 font-bold hover:bg-sky-100">−</button>
+              <span class="text-xs font-black text-sky-950 w-5 text-center">${tData.examCount}</span>
+              <button type="button" onclick="changeExamCount(1)" class="w-6 h-6 rounded-lg bg-sky-600 text-white font-bold hover:bg-sky-500">+ Ex.</button>
+              <button type="button" onclick="setExamCount(10)" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-200 text-sky-900 hover:bg-sky-300" title="Mostrar los 10 exámenes">10</button>
+            </div>
+
+            <!-- Control dinámico de Hacer -->
+            <div class="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-xl px-2.5 py-1">
+              <span class="text-[11px] font-extrabold text-amber-900">Hacer:</span>
+              <button type="button" onclick="changeTaskCount(-1)" class="w-6 h-6 rounded-lg bg-white border border-amber-300 text-amber-900 font-bold hover:bg-amber-100">−</button>
+              <span class="text-xs font-black text-amber-950 w-5 text-center">${tData.taskCount}</span>
+              <button type="button" onclick="changeTaskCount(1)" class="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400">+ Act.</button>
+              <button type="button" onclick="setTaskCount(20)" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 hover:bg-amber-300" title="Mostrar las 20 actividades">20</button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-600">
+            <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">DP: 85–100</span>
+            <span class="px-2 py-0.5 rounded bg-sky-100 text-sky-800 font-bold">DO: 70–84</span>
+            <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold">DA: 51–69</span>
+            <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">ED: 1–50</span>
+          </div>
+        `;
+      } else if (app.activeSheet.endsWith('_asist')) {
+        const tData = app.courseData.trimesters[trimKey];
+        const wCount = tData.weekCount || DEFAULT_WEEKS;
+        toolsBar.innerHTML = `
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-xl px-2.5 py-1">
+              <span class="text-[11px] font-extrabold text-emerald-900">Semanas:</span>
+              <button type="button" onclick="changeWeekCount(-1)" class="w-6 h-6 rounded-lg bg-white border border-emerald-300 text-emerald-900 font-bold hover:bg-emerald-100" title="Quitar última semana">−</button>
+              <span class="text-xs font-black text-emerald-950 px-1.5">${wCount} sem. (${wCount * 3} ses.)</span>
+              <button type="button" onclick="changeWeekCount(1)" class="px-2 h-6 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500" title="Añadir una semana con 3 sesiones">+ Semana</button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+            <span class="px-2 py-0.5 rounded bg-emerald-500 text-white">A = Puntual (100%)</span>
+            <span class="px-2 py-0.5 rounded bg-violet-600 text-white">T = Tarde &gt;10 min (50%)</span>
+            <span class="px-2 py-0.5 rounded bg-amber-400 text-slate-950">L = Licencia (100%)</span>
+            <span class="px-2 py-0.5 rounded bg-rose-500 text-white">F = Falta (0%)</span>
+          </div>
+        `;
+      } else {
+        toolsBar.innerHTML = `
+          <div class="text-xs font-bold text-slate-700">
+            🏆 Consolidado Final Anual — Promedio redondeado de los 3 Trimestres sobre 100 pts (Mínimo: 51 pts)
+          </div>
+          <div class="text-[11px] text-slate-500">
+            Se actualiza automáticamente con los datos de 1°, 2° y 3° Trimestre.
+          </div>
+        `;
+      }
+    }
+
+    function renderBottomTabs() {
+      const container = document.getElementById('bottomSheetTabs');
+      if (!container) return;
+      container.innerHTML = SHEET_TABS.map(tab => {
+        const isActive = tab.id === app.activeSheet;
+        const cls = isActive
+          ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-xs'
+          : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white font-semibold';
+        return `
+          <button
+            type="button"
+            onclick="switchSheet('${tab.id}')"
+            class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition ${cls}"
+          >
+            ${tab.label}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function getActiveTrimKey() {
+      if (app.activeSheet.startsWith('t1')) return 't1';
+      if (app.activeSheet.startsWith('t2')) return 't2';
+      if (app.activeSheet.startsWith('t3')) return 't3';
+      return null;
+    }
+
+    function getFilteredStudents() {
+      const list = app.courseData ? app.courseData.students : [];
+      if (!app.searchQuery) {
+        return list.map((st, idx) => ({ st, idx }));
+      }
+      return list
+        .map((st, idx) => ({ st, idx }))
+        .filter(({ st, idx }) =>
+          st.name.toLowerCase().includes(app.searchQuery) ||
+          (st.parentPhone && st.parentPhone.toLowerCase().includes(app.searchQuery)) ||
+          String(idx + 1) === app.searchQuery
+        );
+    }
+
+    /**
+     * ============================================================================
+     * RENDERIZADO DE CADA PESTAÑA
+     * ============================================================================
+     */
+    function renderActiveSheet() {
+      const main = document.getElementById('mainWorkspace');
+      if (!main || !app.courseData) return;
+
+      if (app.activeSheet === 'nomina') {
+        main.innerHTML = renderNominaView();
+      } else if (app.activeSheet.endsWith('_notas')) {
+        const trimKey = getActiveTrimKey();
+        main.innerHTML = renderTrimesterGradesView(trimKey);
+      } else if (app.activeSheet.endsWith('_asist')) {
+        const trimKey = getActiveTrimKey();
+        main.innerHTML = renderTrimesterAttendanceView(trimKey);
+      } else if (app.activeSheet === 'anual') {
+        main.innerHTML = renderAnnualGradesView();
+      }
+    }
+
+    /**
+     * VISTA 1: NÓMINA MAESTRA DE ESTUDIANTES (Adaptativa iPhone Tarjetas / iPad-Laptop Tabla + Celular Padre/Tutor)
+     */
+    function renderNominaView() {
+      const filtered = getFilteredStudents();
+      const useCards = isMobileCardLayout();
+
+      if (useCards) {
+        const cardsHtml = filtered.map(({ st, idx }) => {
+          const isRetired = st.status === 'Retirado';
+          const telHref = formatPhoneHref(st.parentPhone);
+          const waUrl = formatWhatsAppUrl(st.parentPhone);
+
+          return `
+            <div class="bg-white rounded-2xl border ${isRetired ? 'border-rose-200 bg-rose-50/40' : 'border-slate-200'} p-3.5 shadow-xs space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-lg bg-slate-900 text-white text-xs font-extrabold">
+                  #${idx + 1}
+                </span>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onclick="toggleStudentStatus(${idx})"
+                    class="px-2.5 py-1 rounded-full text-[11px] font-bold transition ${
+                      isRetired
+                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                        : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    }"
+                  >
+                    ${st.status || 'Activo'}
+                  </button>
+                  <button
+                    type="button"
+                    onclick="insertStudentBelow(${idx})"
+                    class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200"
+                    title="Insertar estudiante debajo"
+                  >
+                    + Debajo
+                  </button>
+                  <button
+                    type="button"
+                    onclick="removeStudentAt(${idx})"
+                    class="px-2 py-1 rounded-lg text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200"
+                    title="Eliminar"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-0.5">Apellidos y Nombres</label>
+                <input
+                  type="text"
+                  value="${escapeHtml(st.name)}"
+                  oninput="updateStudentName(${idx}, this.value)"
+                  onpaste="handleRosterPaste(event, ${idx})"
+                  placeholder="Estudiante ${idx + 1}..."
+                  class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none text-sm font-semibold text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-slate-400 mb-0.5">📱 Celular Padre / Tutor</label>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="tel"
+                    inputmode="tel"
+                    value="${escapeHtml(st.parentPhone || '')}"
+                    oninput="updateStudentPhone(${idx}, this.value)"
+                    placeholder="Ej: 70012345"
+                    class="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none text-sm font-semibold text-slate-800"
+                  />
+                  ${telHref ? `
+                    <a
+                      href="tel:${telHref}"
+                      class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold shrink-0"
+                      title="Llamar al padre/tutor"
+                    >
+                      📞
+                    </a>
+                  ` : ''}
+                  ${waUrl ? `
+                    <a
+                      href="${waUrl}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shrink-0"
+                      title="Enviar WhatsApp al padre/tutor"
+                    >
+                      💬 WA
+                    </a>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="space-y-3">
+            <div class="bg-slate-900 text-white rounded-2xl px-4 py-3">
+              <h2 class="text-sm font-extrabold">📋 Nómina — ${escapeHtml(app.currentSubject)} (${escapeHtml(app.currentCourse)})</h2>
+              <p class="text-[11px] text-slate-300 mt-0.5">Registra nombres y celulares de padres/tutores; se sincronizan en todo el cuaderno.</p>
+            </div>
+            <div class="space-y-2.5">${cardsHtml}</div>
+          </div>
+        `;
+      }
+
+      const rowsHtml = filtered.map(({ st, idx }) => {
+        const isRetired = st.status === 'Retirado';
+        const telHref = formatPhoneHref(st.parentPhone);
+        const waUrl = formatWhatsAppUrl(st.parentPhone);
+
+        return `
+          <tr class="border-b border-slate-200 hover:bg-slate-50 transition ${isRetired ? 'bg-rose-50/40 opacity-75' : 'bg-white'}">
+            <td class="px-3 py-2 text-center text-xs font-bold text-slate-500 w-12">${idx + 1}</td>
+            <td class="px-3 py-1.5">
+              <input
+                type="text"
+                value="${escapeHtml(st.name)}"
+                oninput="updateStudentName(${idx}, this.value)"
+                onpaste="handleRosterPaste(event, ${idx})"
+                placeholder="Apellidos y Nombres del estudiante ${idx + 1}..."
+                class="w-full px-2.5 py-1.5 rounded-lg border border-transparent hover:border-slate-300 focus:border-emerald-500 focus:bg-white focus:outline-none text-xs sm:text-sm font-semibold text-slate-800"
+              />
+            </td>
+            <td class="px-3 py-1.5 w-52">
+              <div class="flex items-center gap-1.5">
+                <input
+                  type="tel"
+                  inputmode="tel"
+                  value="${escapeHtml(st.parentPhone || '')}"
+                  oninput="updateStudentPhone(${idx}, this.value)"
+                  placeholder="Ej: 70012345"
+                  class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50/60 hover:border-slate-300 focus:border-emerald-500 focus:bg-white focus:outline-none text-xs sm:text-sm font-semibold text-slate-800"
+                />
+                ${waUrl ? `
+                  <a
+                    href="${waUrl}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="px-2 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[11px] font-bold shrink-0"
+                    title="Abrir WhatsApp del Padre/Tutor"
+                  >
+                    💬
+                  </a>
+                ` : ''}
+                ${telHref ? `
+                  <a
+                    href="tel:${telHref}"
+                    class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold shrink-0"
+                    title="Llamar"
+                  >
+                    📞
+                  </a>
+                ` : ''}
+              </div>
+            </td>
+            <td class="px-3 py-1.5 text-center w-32">
+              <button
+                type="button"
+                onclick="toggleStudentStatus(${idx})"
+                class="px-2.5 py-1 rounded-full text-[11px] font-bold transition ${
+                  isRetired
+                    ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                    : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                }"
+              >
+                ${st.status || 'Activo'}
+              </button>
+            </td>
+            <td class="no-print px-3 py-1.5 text-right w-56">
+              <div class="inline-flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onclick="insertStudentBelow(${idx})"
+                  class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 transition"
+                  title="Insertar un nuevo estudiante exactamente debajo de esta fila sin alterar notas"
+                >
+                  + Insertar debajo
+                </button>
+                <button
+                  type="button"
+                  onclick="removeStudentAt(${idx})"
+                  class="px-2 py-1 rounded-lg text-[11px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition"
+                  title="Eliminar fila"
+                >
+                  ✕
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="bg-slate-900 text-white px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-extrabold">📋 Nómina Oficial de Estudiantes — ${escapeHtml(app.currentSubject)} (${escapeHtml(app.currentCourse)})</h2>
+              <p class="text-[11px] text-slate-300">Los nombres y celulares registrados aquí se sincronizan automáticamente en los 3 trimestres y en el Consolidado Anual.</p>
+            </div>
+          </div>
+          <div class="sheet-scroll overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100 border-b border-slate-300 text-[11px] font-extrabold uppercase text-slate-600">
+                  <th class="px-3 py-2.5 text-center w-12">#</th>
+                  <th class="px-3 py-2.5">Apellidos y Nombres del Estudiante</th>
+                  <th class="px-3 py-2.5 w-52">📱 Celular Padre / Tutor</th>
+                  <th class="px-3 py-2.5 text-center w-32">Estado</th>
+                  <th class="no-print px-3 py-2.5 text-right w-56">Acciones de Fila</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * VISTA 2: CALIFICACIONES TRIMESTRALES (Adaptativa iPhone Tarjetas / iPad-Laptop Tablas)
+     */
+    function renderTrimesterGradesView(trimKey) {
+      const tData = app.courseData.trimesters[trimKey];
+      const filtered = getFilteredStudents();
+
+      // MODO TARJETAS ADAPTATIVO PARA IPHONE
+      if (isMobileCardLayout()) {
+        const mobileCards = filtered.map(({ st, idx }) => {
+          const calc = calculateStudentTrimesterGrades(tData, st.uid);
+          const g = tData.gradesByUid[st.uid];
+          const waUrl = formatWhatsAppUrl(st.parentPhone);
+          const finalColor = !calc.hasAnyData
+            ? 'text-slate-400'
+            : calc.approved
+              ? 'text-emerald-700'
+              : 'text-rose-600';
+
+          // Si está activo Modo Captura Padres en iPhone, muestra resumen limpio para padres
+          if (app.captureMode) {
+            const taskPills = Array.from({ length: tData.taskCount }, (_, kIdx) => {
+              const info = getTaskParentCode(g.tasks[kIdx]);
+              return `
+                <button
+                  type="button"
+                  onclick="cycleTaskFromParentTable('${trimKey}', '${st.uid}', ${kIdx})"
+                  class="tap-btn px-2.5 py-1.5 rounded-xl border text-xs flex flex-col items-center justify-center ${info.cls}"
+                >
+                  <span class="text-[9px] opacity-85">${escapeHtml(tData.taskLabels[kIdx])}</span>
+                  <span class="font-black">${info.code}</span>
+                </button>
+              `;
+            }).join('');
+
+            const examPills = Array.from({ length: tData.examCount }, (_, eIdx) => {
+              const badge = getExamParentBadge(g.exams[eIdx]);
+              return `
+                <div class="px-2.5 py-1.5 rounded-xl border text-center ${badge.cls}">
+                  <div class="text-[9px] opacity-80">${escapeHtml(tData.examLabels[eIdx])}</div>
+                  <div class="text-[11px] font-black">${badge.text}</div>
+                </div>
+              `;
+            }).join('');
+
+            return `
+              <div class="bg-white rounded-2xl border-2 border-indigo-200 p-3.5 shadow-xs space-y-2.5">
+                <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                  <div class="min-w-0">
+                    <span class="text-xs font-extrabold text-indigo-700">#${idx + 1}</span>
+                    <span class="text-sm font-bold text-slate-900 ml-1">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</span>
+                  </div>
+                  ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold shrink-0">💬 Padre</a>` : ''}
+                </div>
+                <div>
+                  <div class="text-[10px] font-extrabold uppercase text-amber-800 mb-1">Hacer (Toca para alternar S / I / T / N)</div>
+                  <div class="grid grid-cols-3 gap-1.5">${taskPills}</div>
+                </div>
+                <div>
+                  <div class="text-[10px] font-extrabold uppercase text-sky-800 mb-1">Saber (Desempeño)</div>
+                  <div class="grid grid-cols-2 gap-1.5">${examPills}</div>
+                </div>
+              </div>
+            `;
+          }
+
+          const serInputsHtml = Array.from({ length: SER_COLUMNS }, (_, sIdx) => {
+            const val = calc.serEffectiveValues[sIdx];
+            return `
+              <div class="bg-purple-50/70 rounded-xl p-1.5 border border-purple-200 text-center">
+                <div class="text-[10px] font-bold text-purple-900 truncate mb-1">${escapeHtml(tData.serLabels[sIdx])}</div>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="${val !== '' && val !== null && val !== undefined ? Math.round(Number(val)) : ''}"
+                  oninput="updateSerGrade('${trimKey}', '${st.uid}', ${sIdx}, this.value)"
+                  placeholder="—"
+                  class="w-full h-9 text-center rounded-lg border border-purple-300 bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+            `;
+          }).join('');
+
+          const examInputsHtml = Array.from({ length: tData.examCount }, (_, eIdx) => {
+            const rawE = g.exams[eIdx];
+            const dispE = (rawE !== '' && rawE !== null && rawE !== undefined && !isNaN(Number(rawE))) ? Math.round(Number(rawE)) : '';
+            return `
+              <div class="bg-sky-50/70 rounded-xl p-1.5 border border-sky-200 text-center">
+                <div class="text-[10px] font-bold text-sky-900 truncate mb-1">${escapeHtml(tData.examLabels[eIdx])}</div>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  max="45"
+                  step="1"
+                  value="${dispE}"
+                  oninput="updateExamGrade('${trimKey}', '${st.uid}', ${eIdx}, this.value)"
+                  placeholder="—"
+                  class="w-full h-9 text-center rounded-lg border border-sky-300 bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+            `;
+          }).join('');
+
+          const taskInputsHtml = Array.from({ length: tData.taskCount }, (_, kIdx) => {
+            const rawT = g.tasks[kIdx];
+            const dispT = (rawT !== '' && rawT !== null && rawT !== undefined && !isNaN(Number(rawT))) ? Math.round(Number(rawT)) : '';
+            const pInfo = getTaskParentCode(g.tasks[kIdx]);
+            return `
+              <div class="bg-amber-50/70 rounded-xl p-1.5 border border-amber-200 text-center">
+                <div class="flex items-center justify-between gap-1 mb-1">
+                  <span class="text-[10px] font-bold text-amber-900 truncate">${escapeHtml(tData.taskLabels[kIdx])}</span>
+                  <span class="text-[9px] px-1 rounded ${pInfo.cls}">${pInfo.code}</span>
+                </div>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  max="40"
+                  step="1"
+                  value="${dispT}"
+                  oninput="updateTaskGrade('${trimKey}', '${st.uid}', ${kIdx}, this.value)"
+                  placeholder="—"
+                  class="w-full h-9 text-center rounded-lg border border-amber-300 bg-white font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+            `;
+          }).join('');
+
+          const rawAuto = g.autoEval;
+          const dispAuto = (rawAuto !== '' && rawAuto !== null && rawAuto !== undefined && !isNaN(Number(rawAuto))) ? Math.round(Number(rawAuto)) : '';
+
+          return `
+            <div id="grade-row-${st.uid}" class="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-xs space-y-3">
+              <!-- Cabecera Estudiante + Nota Final -->
+              <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white text-[11px] font-extrabold">#${idx + 1}</span>
+                    <h3 class="text-sm font-extrabold text-slate-900 truncate">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</h3>
+                  </div>
+                  ${st.parentPhone ? `<p class="text-[11px] text-slate-500 mt-0.5">📱 Padre/Tutor: ${escapeHtml(st.parentPhone)}</p>` : ''}
+                </div>
+                <div id="final-cell-${st.uid}" class="flex items-center gap-1.5 shrink-0 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200">
+                  <span class="text-base font-black ${finalColor}">${calc.finalScore}</span>
+                  <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded ${calc.levelBadge}">${calc.level}</span>
+                </div>
+              </div>
+
+              <!-- SER /10 -->
+              <div>
+                <div class="flex items-center justify-between text-[11px] font-extrabold text-purple-900 mb-1.5">
+                  <span>SER (10 pts)</span>
+                  <span class="bg-purple-100 px-2 py-0.5 rounded-md">Prom: <strong id="ser-prom-${st.uid}">${calc.serScore}</strong>/10</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5">${serInputsHtml}</div>
+              </div>
+
+              <!-- SABER /45 -->
+              <div>
+                <div class="flex items-center justify-between text-[11px] font-extrabold text-sky-900 mb-1.5">
+                  <span>SABER (45 pts)</span>
+                  <span class="bg-sky-100 px-2 py-0.5 rounded-md">Prom: <strong id="saber-prom-${st.uid}">${calc.saberScore}</strong>/45</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5">${examInputsHtml}</div>
+              </div>
+
+              <!-- HACER /40 -->
+              <div>
+                <div class="flex items-center justify-between text-[11px] font-extrabold text-amber-900 mb-1.5">
+                  <span>HACER (40 pts)</span>
+                  <span class="bg-amber-100 px-2 py-0.5 rounded-md">Prom: <strong id="hacer-prom-${st.uid}">${calc.hacerScore}</strong>/40</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5">${taskInputsHtml}</div>
+              </div>
+
+              <!-- AUTOEVALUACIÓN /5 -->
+              <div class="flex items-center justify-between bg-teal-50/70 border border-teal-200 rounded-xl px-3 py-2">
+                <span class="text-xs font-extrabold text-teal-900">Autoevaluación (máx. 5 pts)</span>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  max="5"
+                  step="1"
+                  value="${dispAuto}"
+                  oninput="updateAutoEvalGrade('${trimKey}', '${st.uid}', this.value)"
+                  placeholder="—"
+                  class="w-16 h-9 text-center rounded-lg border border-teal-300 bg-white font-extrabold text-teal-950 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="space-y-3">
+            <div class="bg-slate-900 text-white rounded-2xl px-4 py-3">
+              <h2 class="text-sm font-extrabold">📊 ${TRIM_NAMES[trimKey]} — ${escapeHtml(app.currentCourse)}</h2>
+              <p class="text-[11px] text-slate-300 mt-0.5">Vista adaptada para iPhone · Notas redondeadas a enteros sobre 100 pts (Mín. 51).</p>
+            </div>
+            <div class="space-y-3">${mobileCards}</div>
+          </div>
+        `;
+      }
+
+      // --- CUADRO 1: REGISTRO PRINCIPAL DE CALIFICACIONES (iPad y Laptop) ---
+      let cuadro1Html = '';
+      if (!app.captureMode) {
+        const serHeaders = Array.from({ length: SER_COLUMNS }, (_, sIdx) => {
+          const isAuto = sIdx === 0 || sIdx === 1 || sIdx === 2;
+          const autoHint = sIdx === 0 ? 'Auto Asist.' : sIdx === 1 ? 'Auto Tareas' : sIdx === 2 ? 'Auto Exám.' : '/10 pts';
+          return `
+            <th class="bg-purple-50 border-r border-slate-200 px-1 py-1.5 text-center min-w-[78px]">
+              <input
+                type="text"
+                value="${escapeHtml(tData.serLabels[sIdx])}"
+                oninput="updateSerLabel('${trimKey}', ${sIdx}, this.value)"
+                title="Haz clic para editar el nombre de este criterio del SER"
+                class="w-full bg-transparent text-center text-[10px] font-extrabold text-purple-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 rounded px-0.5"
+              />
+              <div class="text-[9px] font-semibold ${isAuto ? 'text-purple-600' : 'text-slate-400'}">
+                ${autoHint}
+              </div>
+            </th>
+          `;
+        }).join('');
+
+        const examHeaders = Array.from({ length: tData.examCount }, (_, eIdx) => `
+          <th class="bg-sky-50 border-r border-slate-200 px-1 py-1.5 text-center min-w-[64px]">
+            <input
+              type="text"
+              value="${escapeHtml(tData.examLabels[eIdx])}"
+              oninput="updateExamLabel('${trimKey}', ${eIdx}, this.value)"
+              title="Haz clic para renombrar este examen"
+              class="w-full bg-transparent text-center text-[10px] font-extrabold text-sky-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 rounded px-0.5"
+            />
+            <div class="text-[9px] text-sky-600 font-semibold">/45</div>
+          </th>
+        `).join('');
+
+        const taskHeaders = Array.from({ length: tData.taskCount }, (_, kIdx) => `
+          <th class="bg-amber-50 border-r border-slate-200 px-1 py-1.5 text-center min-w-[60px]">
+            <input
+              type="text"
+              value="${escapeHtml(tData.taskLabels[kIdx])}"
+              oninput="updateTaskLabel('${trimKey}', ${kIdx}, this.value)"
+              title="Haz clic para renombrar esta actividad"
+              class="w-full bg-transparent text-center text-[10px] font-extrabold text-amber-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 rounded px-0.5"
+            />
+            <div class="text-[9px] text-amber-700 font-semibold">/40</div>
+          </th>
+        `).join('');
+
+        const bodyRows = filtered.map(({ st, idx }) => {
+          const calc = calculateStudentTrimesterGrades(tData, st.uid);
+          const g = tData.gradesByUid[st.uid];
+          const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+          const stickyBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+
+          const serCells = Array.from({ length: SER_COLUMNS }, (_, sIdx) => {
+            const val = calc.serEffectiveValues[sIdx];
+            const isAutoComputed = (sIdx === 0 || sIdx === 1 || sIdx === 2) && !g.serManualOverride[sIdx] && val !== '';
+            const displayVal = (val !== '' && val !== null && val !== undefined) ? Math.round(Number(val)) : '';
+            return `
+              <td class="border-r border-slate-200 p-1 text-center ${isAutoComputed ? 'bg-purple-50/50' : ''}">
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value="${displayVal}"
+                  oninput="updateSerGrade('${trimKey}', '${st.uid}', ${sIdx}, this.value)"
+                  placeholder="—"
+                  class="w-12 h-7 text-center rounded-md border border-slate-200 focus:border-purple-500 focus:bg-white focus:outline-none text-xs font-bold ${
+                    isAutoComputed ? 'text-purple-800 bg-purple-50/60' : 'text-slate-800 bg-transparent'
+                  }"
+                />
+              </td>
+            `;
+          }).join('');
+
+          const examCells = Array.from({ length: tData.examCount }, (_, eIdx) => {
+            const rawE = g.exams[eIdx];
+            const dispE = (rawE !== '' && rawE !== null && rawE !== undefined && !isNaN(Number(rawE))) ? Math.round(Number(rawE)) : '';
+            return `
+              <td class="border-r border-slate-200 p-1 text-center">
+                <input
+                  type="number"
+                  min="0"
+                  max="45"
+                  step="1"
+                  value="${dispE}"
+                  oninput="updateExamGrade('${trimKey}', '${st.uid}', ${eIdx}, this.value)"
+                  placeholder="—"
+                  class="w-12 h-7 text-center rounded-md border border-slate-200 focus:border-sky-500 focus:bg-white focus:outline-none text-xs font-bold text-slate-800 bg-transparent"
+                />
+              </td>
+            `;
+          }).join('');
+
+          const taskCells = Array.from({ length: tData.taskCount }, (_, kIdx) => {
+            const rawT = g.tasks[kIdx];
+            const dispT = (rawT !== '' && rawT !== null && rawT !== undefined && !isNaN(Number(rawT))) ? Math.round(Number(rawT)) : '';
+            return `
+              <td class="border-r border-slate-200 p-1 text-center">
+                <input
+                  type="number"
+                  min="0"
+                  max="40"
+                  step="1"
+                  value="${dispT}"
+                  oninput="updateTaskGrade('${trimKey}', '${st.uid}', ${kIdx}, this.value)"
+                  placeholder="—"
+                  class="w-11 h-7 text-center rounded-md border border-slate-200 focus:border-amber-500 focus:bg-white focus:outline-none text-xs font-bold text-slate-800 bg-transparent"
+                />
+              </td>
+            `;
+          }).join('');
+
+          const rawAuto = g.autoEval;
+          const dispAuto = (rawAuto !== '' && rawAuto !== null && rawAuto !== undefined && !isNaN(Number(rawAuto))) ? Math.round(Number(rawAuto)) : '';
+
+          const finalColor = !calc.hasAnyData
+            ? 'text-slate-400'
+            : calc.approved
+              ? 'text-emerald-700'
+              : 'text-rose-600';
+
+          return `
+            <tr id="grade-row-${st.uid}" class="${rowBg} border-b border-slate-200 hover:bg-blue-50/30 transition-colors">
+              <td class="sticky left-0 z-10 ${stickyBg} px-2 py-1.5 text-center text-xs font-bold text-slate-400 border-r border-slate-200">${idx + 1}</td>
+              <td class="sticky left-[40px] z-10 ${stickyBg} px-2.5 py-1.5 border-r border-slate-300 sticky-left-shadow min-w-[200px] sm:min-w-[230px]">
+                <div class="text-xs font-semibold text-slate-800 truncate">${escapeHtml(st.name) || `<span class="text-slate-300 italic">Estudiante ${idx + 1}</span>`}</div>
+              </td>
+
+              ${serCells}
+              <td id="ser-prom-${st.uid}" class="bg-purple-100/70 border-r border-slate-300 px-2 py-1 text-center text-xs font-black text-purple-950">
+                ${calc.serScore}
+              </td>
+
+              ${examCells}
+              <td id="saber-prom-${st.uid}" class="bg-sky-100/70 border-r border-slate-300 px-2 py-1 text-center text-xs font-black text-sky-950">
+                ${calc.saberScore}
+              </td>
+
+              ${taskCells}
+              <td id="hacer-prom-${st.uid}" class="bg-amber-100/70 border-r border-slate-300 px-2 py-1 text-center text-xs font-black text-amber-950">
+                ${calc.hacerScore}
+              </td>
+
+              <td class="border-r border-slate-300 p-1 text-center bg-teal-50/40">
+                <input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="1"
+                  value="${dispAuto}"
+                  oninput="updateAutoEvalGrade('${trimKey}', '${st.uid}', this.value)"
+                  placeholder="—"
+                  class="w-11 h-7 text-center rounded-md border border-teal-200 focus:border-teal-600 focus:bg-white focus:outline-none text-xs font-extrabold text-teal-900 bg-transparent"
+                />
+              </td>
+
+              <td id="final-cell-${st.uid}" class="sticky right-0 z-10 ${stickyBg} px-2.5 py-1 border-l border-slate-300 sticky-right-shadow text-center min-w-[115px]">
+                <div class="flex items-center justify-center gap-1.5">
+                  <span class="text-sm font-black ${finalColor}">${calc.finalScore}</span>
+                  <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded ${calc.levelBadge}">${calc.level}</span>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        cuadro1Html = `
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 class="text-xs sm:text-sm font-extrabold">📊 Cuadro 1 — Registro Principal de Calificaciones · ${TRIM_NAMES[trimKey]} (${escapeHtml(app.currentCourse)})</h2>
+                <p class="text-[11px] text-slate-300">Notas redondeadas a enteros · SER: Asistencia, Responsabilidad (Tareas), Dedicación (Exámenes) y Respeto.</p>
+              </div>
+              <span class="text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2.5 py-1 rounded-lg">
+                Total: 100 pts (Mín. 51)
+              </span>
+            </div>
+
+            <div class="sheet-scroll overflow-x-auto max-h-[65vh]">
+              <table class="w-full border-collapse text-left">
+                <thead class="sticky top-0 z-20 select-none">
+                  <tr class="border-b border-slate-300 text-[11px] font-black uppercase tracking-wider">
+                    <th rowspan="2" class="sticky left-0 z-30 bg-slate-100 w-10 min-w-[40px] px-2 py-2 text-center border-r border-slate-200 text-slate-500">#</th>
+                    <th rowspan="2" class="sticky left-[40px] z-30 bg-slate-100 min-w-[200px] sm:min-w-[230px] px-3 py-2 text-left border-r border-slate-300 sticky-left-shadow text-slate-800">Estudiante</th>
+
+                    <th colspan="${SER_COLUMNS + 1}" class="bg-purple-700 text-white px-2 py-1.5 text-center border-r border-slate-300">SER (10 PTS)</th>
+                    <th colspan="${tData.examCount + 1}" class="bg-sky-700 text-white px-2 py-1.5 text-center border-r border-slate-300">SABER (45 PTS)</th>
+                    <th colspan="${tData.taskCount + 1}" class="bg-amber-600 text-white px-2 py-1.5 text-center border-r border-slate-300">HACER (40 PTS)</th>
+                    <th rowspan="2" class="bg-teal-700 text-white px-2 py-1.5 text-center border-r border-slate-300 min-w-[68px]">AUTO<br><span class="text-[9px] font-normal">(5 pts)</span></th>
+                    <th rowspan="2" class="sticky right-0 z-30 bg-slate-900 text-white px-2.5 py-1.5 text-center border-l border-slate-300 sticky-right-shadow min-w-[115px]">NOTA<br><span class="text-[9px] font-normal text-emerald-300">/ 100 pts</span></th>
+                  </tr>
+                  <tr class="border-b border-slate-300 text-[10px]">
+                    ${serHeaders}
+                    <th class="bg-purple-200 text-purple-950 font-black px-2 py-1 text-center border-r border-slate-300 min-w-[54px]">Prom.<br>/10</th>
+
+                    ${examHeaders}
+                    <th class="bg-sky-200 text-sky-950 font-black px-2 py-1 text-center border-r border-slate-300 min-w-[54px]">Prom.<br>/45</th>
+
+                    ${taskHeaders}
+                    <th class="bg-amber-200 text-amber-950 font-black px-2 py-1 text-center border-r border-slate-300 min-w-[54px]">Prom.<br>/40</th>
+                  </tr>
+                </thead>
+                <tbody>${bodyRows}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      // --- CUADRO 2: SEGUIMIENTO PARA PADRES DE FAMILIA ---
+      const parentTaskHeaders = Array.from({ length: tData.taskCount }, (_, kIdx) => `
+        <th class="bg-amber-50 border-r border-slate-200 px-1.5 py-1.5 text-center text-[10px] font-extrabold text-amber-900 min-w-[54px]">
+          ${escapeHtml(tData.taskLabels[kIdx])}
+        </th>
+      `).join('');
+
+      const parentExamHeaders = Array.from({ length: tData.examCount }, (_, eIdx) => `
+        <th class="bg-sky-50 border-r border-slate-200 px-1.5 py-1.5 text-center text-[10px] font-extrabold text-sky-900 min-w-[82px]">
+          ${escapeHtml(tData.examLabels[eIdx])}
+        </th>
+      `).join('');
+
+      const parentRows = filtered.map(({ st, idx }) => {
+        const g = tData.gradesByUid[st.uid];
+        const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+        const stickyBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+        const waUrl = formatWhatsAppUrl(st.parentPhone);
+
+        let cntS = 0, cntI = 0, cntT = 0, cntN = 0;
+        const taskBadges = Array.from({ length: tData.taskCount }, (_, kIdx) => {
+          const info = getTaskParentCode(g.tasks[kIdx]);
+          if (info.code === 'S') cntS++;
+          else if (info.code === 'I') cntI++;
+          else if (info.code === 'T') cntT++;
+          else if (info.code === 'N') cntN++;
+
+          return `
+            <td class="border-r border-slate-200 p-1 text-center">
+              <button
+                type="button"
+                onclick="cycleTaskFromParentTable('${trimKey}', '${st.uid}', ${kIdx})"
+                title="${info.label} (Clic para alternar S=40, I=25, T=10, N=0)"
+                class="tap-btn w-7 h-7 rounded-lg border text-xs inline-flex items-center justify-center cursor-pointer ${info.cls}"
+              >
+                ${info.code}
+              </button>
+            </td>
+          `;
+        }).join('');
+
+        const examBadges = Array.from({ length: tData.examCount }, (_, eIdx) => {
+          const badge = getExamParentBadge(g.exams[eIdx]);
+          return `
+            <td class="border-r border-slate-200 p-1 text-center">
+              <span class="inline-block px-2 py-0.5 rounded-md border text-[10px] tracking-tight ${badge.cls}">
+                ${badge.text}
+              </span>
+            </td>
+          `;
+        }).join('');
+
+        return `
+          <tr id="parent-row-${st.uid}" class="${rowBg} border-b border-slate-200">
+            <td class="sticky left-0 z-10 ${stickyBg} px-2 py-1.5 text-center text-xs font-bold text-slate-400 border-r border-slate-200">${idx + 1}</td>
+            <td class="sticky left-[40px] z-10 ${stickyBg} px-2.5 py-1.5 border-r border-slate-300 sticky-left-shadow min-w-[200px]">
+              <div class="flex items-center justify-between gap-1.5">
+                <span class="text-xs font-semibold text-slate-800 truncate">${escapeHtml(st.name) || `<span class="text-slate-300 italic">Estudiante ${idx + 1}</span>`}</span>
+                ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" title="WhatsApp Padre/Tutor (${escapeHtml(st.parentPhone)})" class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">💬</a>` : ''}
+              </div>
+            </td>
+            ${taskBadges}
+            <td class="bg-slate-100 border-r border-slate-300 px-2 py-1 text-center text-[10px] font-bold whitespace-nowrap">
+              <span class="text-emerald-700">S:${cntS}</span> ·
+              <span class="text-amber-700">I:${cntI}</span> ·
+              <span class="text-violet-700">T:${cntT}</span> ·
+              <span class="text-rose-700">N:${cntN}</span>
+            </td>
+            ${examBadges}
+          </tr>
+        `;
+      }).join('');
+
+      const cuadro2Html = `
+        <div id="parentCaptureCard" class="bg-white rounded-2xl border-2 ${app.captureMode ? 'border-indigo-500 shadow-lg' : 'border-slate-200 shadow-xs'} overflow-hidden">
+          <div class="bg-indigo-950 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-xs sm:text-sm font-extrabold">👨‍👩‍👧 Cuadro 2 — Seguimiento de Tareas y Exámenes para Padres · ${escapeHtml(app.institution)}</h2>
+              <p class="text-[11px] text-indigo-200">
+                ${escapeHtml(app.currentSubject)} · ${escapeHtml(app.currentCourse)} · ${TRIM_NAMES[trimKey]} — Reflejo automático del Cuadro 1 listo para compartir.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+              <span class="px-2 py-0.5 rounded bg-emerald-500 text-white">S = Sí (40)</span>
+              <span class="px-2 py-0.5 rounded bg-amber-400 text-slate-950">I = Incompleto (20–25)</span>
+              <span class="px-2 py-0.5 rounded bg-violet-600 text-white">T = Tarde (10)</span>
+              <span class="px-2 py-0.5 rounded bg-rose-500 text-white">N = No (0)</span>
+            </div>
+          </div>
+
+          <div class="sheet-scroll overflow-x-auto max-h-[65vh]">
+            <table class="w-full border-collapse text-left">
+              <thead class="sticky top-0 z-20 select-none">
+                <tr class="border-b border-slate-300 text-[11px] font-black uppercase">
+                  <th rowspan="2" class="sticky left-0 z-30 bg-slate-100 w-10 min-w-[40px] px-2 py-2 text-center border-r border-slate-200 text-slate-500">#</th>
+                  <th rowspan="2" class="sticky left-[40px] z-30 bg-slate-100 min-w-[200px] px-3 py-2 text-left border-r border-slate-300 sticky-left-shadow text-slate-800">Estudiante</th>
+                  <th colspan="${tData.taskCount + 1}" class="bg-amber-600 text-white px-2 py-1 text-center border-r border-slate-300">Cumplimiento de Hacer</th>
+                  <th colspan="${tData.examCount}" class="bg-sky-700 text-white px-2 py-1 text-center">Desempeño en Saber (/45 pts)</th>
+                </tr>
+                <tr class="border-b border-slate-300">
+                  ${parentTaskHeaders}
+                  <th class="bg-slate-200 text-slate-800 px-2 py-1 text-center text-[10px] font-extrabold border-r border-slate-300 min-w-[130px]">Resumen</th>
+                  ${parentExamHeaders}
+                </tr>
+              </thead>
+              <tbody>${parentRows}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      // --- CUADRO 3: REPORTE TRIMESTRAL AUTOMÁTICO ---
+      let cuadro3Html = '';
+      if (!app.captureMode) {
+        const evaluatedStudents = app.courseData.students
+          .map((st, idx) => ({ st, idx, calc: calculateStudentTrimesterGrades(tData, st.uid) }))
+          .filter(item => item.st.name.trim() !== '' || item.calc.hasAnyData);
+
+        const totalEval = evaluatedStudents.length;
+        const approvedCount = evaluatedStudents.filter(x => x.calc.approved).length;
+        const riskCount = evaluatedStudents.filter(x => x.calc.hasAnyData && !x.calc.approved).length;
+        const avgCourse = totalEval > 0
+          ? Math.round(evaluatedStudents.reduce((a, b) => a + b.calc.finalScore, 0) / totalEval)
+          : 0;
+
+        const reportRows = evaluatedStudents.map(({ st, idx, calc }) => {
+          let diagnosis = 'Sin notas registradas aún.';
+          if (calc.hasAnyData) {
+            if (calc.finalScore >= 85) {
+              diagnosis = 'Desarrollo Pleno (DP): Excelente dominio conceptual, entrega puntual de actividades y compromiso ejemplar.';
+            } else if (calc.finalScore >= 70) {
+              diagnosis = 'Desarrollo Óptimo (DO): Buen desempeño académico; mantener constancia en evaluaciones y tareas.';
+            } else if (calc.finalScore >= 51) {
+              diagnosis = 'Desarrollo Aceptable (DA): Aprueba el trimestre, pero requiere reforzar actividades y preparación de exámenes.';
+            } else {
+              diagnosis = 'En Desarrollo (ED — Atención): Requiere apoyo pedagógico inmediato, nivelación de evaluaciones y seguimiento con padres.';
+            }
+          }
+
+          return `
+            <tr class="border-b border-slate-200 hover:bg-slate-50">
+              <td class="px-3 py-2 text-center text-xs font-bold text-slate-500">${idx + 1}</td>
+              <td class="px-3 py-2 text-xs font-bold text-slate-800">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</td>
+              <td class="px-2 py-2 text-center text-xs font-semibold text-purple-800">${calc.serScore}</td>
+              <td class="px-2 py-2 text-center text-xs font-semibold text-sky-800">${calc.saberScore}</td>
+              <td class="px-2 py-2 text-center text-xs font-semibold text-amber-800">${calc.hacerScore}</td>
+              <td class="px-2 py-2 text-center text-xs font-semibold text-teal-800">${calc.autoScore}</td>
+              <td class="px-2 py-2 text-center text-xs font-black ${calc.approved ? 'text-emerald-700' : 'text-rose-600'}">${calc.finalScore} / 100</td>
+              <td class="px-2 py-2 text-center">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                  !calc.hasAnyData
+                    ? 'bg-slate-100 text-slate-500'
+                    : calc.approved
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : 'bg-rose-100 text-rose-800'
+                }">
+                  ${!calc.hasAnyData ? 'PENDIENTE' : calc.approved ? 'APROBADO' : 'EN RIESGO'}
+                </span>
+              </td>
+              <td class="px-3 py-2 text-xs text-slate-600">${diagnosis}</td>
+            </tr>
+          `;
+        }).join('');
+
+        cuadro3Html = `
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="bg-slate-800 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+              <h2 class="text-xs sm:text-sm font-extrabold">📈 Cuadro 3 — Reporte Pedagógico Automático · ${TRIM_NAMES[trimKey]}</h2>
+              <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+                <span class="bg-slate-700 px-2.5 py-1 rounded-lg">Promedio Curso: <strong class="text-emerald-300">${avgCourse} pts</strong></span>
+                <span class="bg-emerald-600/30 text-emerald-200 px-2.5 py-1 rounded-lg">Aprobados (≥51): ${approvedCount}</span>
+                <span class="bg-rose-600/30 text-rose-200 px-2.5 py-1 rounded-lg">En Riesgo (&lt;51): ${riskCount}</span>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full border-collapse text-left">
+                <thead>
+                  <tr class="bg-slate-100 border-b border-slate-300 text-[10px] font-extrabold uppercase text-slate-600">
+                    <th class="px-3 py-2 text-center w-10">#</th>
+                    <th class="px-3 py-2 min-w-[190px]">Estudiante</th>
+                    <th class="px-2 py-2 text-center">Ser /10</th>
+                    <th class="px-2 py-2 text-center">Saber /45</th>
+                    <th class="px-2 py-2 text-center">Hacer /40</th>
+                    <th class="px-2 py-2 text-center">Auto /5</th>
+                    <th class="px-2 py-2 text-center">Nota Final</th>
+                    <th class="px-2 py-2 text-center">Estado</th>
+                    <th class="px-3 py-2 min-w-[260px]">Diagnóstico Trimestral</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reportRows || `<tr><td colspan="9" class="px-4 py-6 text-center text-xs text-slate-400">Registra nombres en la Nómina o calificaciones en el Cuadro 1 para generar el reporte automático.</td></tr>`}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      return `${cuadro1Html}${cuadro2Html}${cuadro3Html}`;
+    }
+
+    /**
+     * VISTA 3: CONTROL DE ASISTENCIA (Adaptativa iPhone por Sesión / iPad-Laptop Matriz Completa)
+     */
+    function renderTrimesterAttendanceView(trimKey) {
+      const tData = app.courseData.trimesters[trimKey];
+      const weekCount = tData.weekCount || DEFAULT_WEEKS;
+      const totalSessions = weekCount * SESSIONS_PER_WEEK;
+      const filtered = getFilteredStudents();
+
+      // VISTA MÓVIL IPHONE: Selector de Semana y Sesión + Tarjetas grandes para marcar con un toque
+      if (isMobileCardLayout()) {
+        if (app.mobileAttSession >= totalSessions) app.mobileAttSession = 0;
+        const c = app.mobileAttSession;
+        const curWeek = Math.floor(c / SESSIONS_PER_WEEK) + 1;
+        const curSes = (c % SESSIONS_PER_WEEK) + 1;
+        const curDate = tData.sessionDates[c] || '';
+
+        const sessionOptions = [];
+        for (let w = 1; w <= weekCount; w++) {
+          for (let s = 1; s <= SESSIONS_PER_WEEK; s++) {
+            const idxCol = (w - 1) * SESSIONS_PER_WEEK + (s - 1);
+            const dStr = tData.sessionDates[idxCol] ? ` (${tData.sessionDates[idxCol]})` : '';
+            sessionOptions.push(
+              `<option value="${idxCol}" ${idxCol === c ? 'selected' : ''}>Semana ${w} · Sesión ${s}${escapeHtml(dStr)}</option>`
+            );
+          }
+        }
+
+        const studentCards = filtered.map(({ st, idx }) => {
+          const att = calculateAttendanceStats(tData, st.uid);
+          const v = tData.attendanceByUid[st.uid][c];
+          let btnCls = 'bg-slate-100 text-slate-500 border-slate-300';
+          let lbl = 'Sin marcar';
+          if (v === 'A') {
+            btnCls = 'bg-emerald-500 text-white border-emerald-600 font-extrabold';
+            lbl = 'A · Puntual';
+          } else if (v === 'T') {
+            btnCls = 'bg-violet-600 text-white border-violet-700 font-extrabold';
+            lbl = 'T · Tarde';
+          } else if (v === 'L') {
+            btnCls = 'bg-amber-400 text-slate-950 border-amber-500 font-extrabold';
+            lbl = 'L · Licencia';
+          } else if (v === 'F') {
+            btnCls = 'bg-rose-500 text-white border-rose-600 font-extrabold';
+            lbl = 'F · Falta';
+          }
+
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200 p-3 shadow-xs flex items-center justify-between gap-2.5">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-extrabold text-slate-400">#${idx + 1}</span>
+                  <span class="text-sm font-bold text-slate-900 truncate">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</span>
+                </div>
+                <div id="att-sum-${st.uid}" class="text-[11px] font-semibold text-slate-500 mt-1">
+                  <span class="text-emerald-700">A:${att.countA}</span> ·
+                  <span class="text-violet-700">T:${att.countT}</span> ·
+                  <span class="text-amber-700">L:${att.countL}</span> ·
+                  <span class="text-rose-700">F:${att.countF}</span> ·
+                  <strong class="text-slate-900">${att.pct}%</strong>
+                  <span class="text-purple-700">(SER:${att.ser1Scale10 !== '' ? att.ser1Scale10 : '—'})</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                id="att-btn-${st.uid}-${c}"
+                onclick="toggleAttendanceCell('${trimKey}', '${st.uid}', ${c})"
+                class="tap-btn px-3 py-2.5 rounded-xl border text-xs min-w-[104px] text-center shrink-0 cursor-pointer ${btnCls}"
+              >
+                ${lbl}
+              </button>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="space-y-3">
+            <div class="bg-slate-900 text-white rounded-2xl p-3.5 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2 class="text-sm font-extrabold">📅 Asistencia Móvil · ${TRIM_NAMES[trimKey]}</h2>
+                <span class="text-[11px] font-bold text-emerald-300">Sem. ${curWeek} · S${curSes}</span>
+              </div>
+
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onclick="stepMobileSession(-1, ${totalSessions})"
+                  class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold"
+                >◀</button>
+                <select
+                  onchange="selectMobileSession(this.value)"
+                  class="flex-1 px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs font-bold focus:outline-none"
+                >
+                  ${sessionOptions.join('')}
+                </select>
+                <button
+                  type="button"
+                  onclick="stepMobileSession(1, ${totalSessions})"
+                  class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs font-bold"
+                >▶</button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  value="${escapeHtml(curDate)}"
+                  oninput="updateSessionDate('${trimKey}', ${c}, this.value)"
+                  placeholder="Fecha de sesión (Ej: 17 abr)"
+                  class="flex-1 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-xs font-semibold focus:outline-none focus:border-emerald-400"
+                />
+                <button
+                  type="button"
+                  onclick="fillSessionPresent('${trimKey}', ${c})"
+                  class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shrink-0"
+                >
+                  ✓ Todos A
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-2">${studentCards}</div>
+          </div>
+        `;
+      }
+
+      let row1Weeks = '';
+      for (let w = 1; w <= weekCount; w++) {
+        const bgWeek = w % 2 === 0 ? 'bg-slate-200/80' : 'bg-slate-100';
+        row1Weeks += `
+          <th colspan="${SESSIONS_PER_WEEK}" class="${bgWeek} px-2 py-1.5 text-center border-r border-slate-300 text-xs font-extrabold text-slate-800">
+            Semana ${w}
+          </th>
+        `;
+      }
+
+      let row2Dates = '';
+      for (let w = 1; w <= weekCount; w++) {
+        const bgWeek = w % 2 === 0 ? 'bg-slate-200/50' : 'bg-white';
+        for (let s = 1; s <= SESSIONS_PER_WEEK; s++) {
+          const globalCol = (w - 1) * SESSIONS_PER_WEEK + (s - 1);
+          const borderRight = s === SESSIONS_PER_WEEK ? 'border-r border-slate-300' : 'border-r border-slate-200';
+          const dateVal = tData.sessionDates[globalCol] || '';
+          row2Dates += `
+            <th class="${bgWeek} ${borderRight} p-0.5 text-center min-w-[48px]">
+              <input
+                type="text"
+                value="${escapeHtml(dateVal)}"
+                oninput="updateSessionDate('${trimKey}', ${globalCol}, this.value)"
+                placeholder="Fecha"
+                title="Escribir fecha de Semana ${w} - Sesión ${s} (Ej: 17 abr)"
+                class="w-12 text-center bg-transparent hover:bg-slate-100 focus:bg-emerald-50 focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-0.5 py-0.5 text-[9px] font-semibold text-slate-600 placeholder-slate-300"
+              />
+            </th>
+          `;
+        }
+      }
+
+      let row3Sessions = '';
+      for (let w = 1; w <= weekCount; w++) {
+        const bgWeek = w % 2 === 0 ? 'bg-slate-200/60' : 'bg-slate-50';
+        for (let s = 1; s <= SESSIONS_PER_WEEK; s++) {
+          const globalCol = (w - 1) * SESSIONS_PER_WEEK + (s - 1);
+          const borderRight = s === SESSIONS_PER_WEEK ? 'border-r border-slate-300' : 'border-r border-slate-200';
+          row3Sessions += `
+            <th class="${bgWeek} ${borderRight} p-1 text-center min-w-[48px]">
+              <button
+                type="button"
+                onclick="fillSessionPresent('${trimKey}', ${globalCol})"
+                title="Marcar 'Asistencia (A)' a toda la lista en Semana ${w} - Sesión ${s}"
+                class="w-full py-0.5 rounded hover:bg-emerald-600 hover:text-white transition text-[10px] font-extrabold text-slate-700 cursor-pointer"
+              >
+                S${s}
+              </button>
+            </th>
+          `;
+        }
+      }
+
+      const bodyRows = filtered.map(({ st, idx }) => {
+        const att = calculateAttendanceStats(tData, st.uid);
+        const arr = tData.attendanceByUid[st.uid];
+        const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+        const stickyBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+
+        let cellsHtml = '';
+        for (let c = 0; c < totalSessions; c++) {
+          const v = arr[c];
+          const isEndWeek = (c + 1) % SESSIONS_PER_WEEK === 0;
+          const borderRight = isEndWeek ? 'border-r border-slate-300' : 'border-r border-slate-100';
+
+          let btnCls = 'bg-slate-50 text-slate-300 border-slate-200 hover:border-emerald-400';
+          let lbl = '·';
+          if (v === 'A') {
+            btnCls = 'bg-emerald-500 text-white border-emerald-600 font-extrabold';
+            lbl = 'A';
+          } else if (v === 'T') {
+            btnCls = 'bg-violet-600 text-white border-violet-700 font-extrabold';
+            lbl = 'T';
+          } else if (v === 'L') {
+            btnCls = 'bg-amber-400 text-slate-950 border-amber-500 font-extrabold';
+            lbl = 'L';
+          } else if (v === 'F') {
+            btnCls = 'bg-rose-500 text-white border-rose-600 font-extrabold';
+            lbl = 'F';
+          }
+
+          cellsHtml += `
+            <td class="${borderRight} p-1 text-center">
+              <button
+                type="button"
+                id="att-btn-${st.uid}-${c}"
+                onclick="toggleAttendanceCell('${trimKey}', '${st.uid}', ${c})"
+                class="tap-btn w-7 h-7 rounded-lg border text-xs inline-flex items-center justify-center cursor-pointer ${btnCls}"
+              >
+                ${lbl}
+              </button>
+            </td>
+          `;
+        }
+
+        const barColor = att.marked === 0
+          ? 'bg-slate-300'
+          : att.pct >= 80
+            ? 'bg-emerald-500'
+            : att.pct >= 60
+              ? 'bg-amber-500'
+              : 'bg-rose-500';
+
+        return `
+          <tr class="${rowBg} border-b border-slate-200 hover:bg-blue-50/30">
+            <td class="sticky left-0 z-10 ${stickyBg} px-2 py-1.5 text-center text-xs font-bold text-slate-400 border-r border-slate-200">${idx + 1}</td>
+            <td class="sticky left-[40px] z-10 ${stickyBg} px-2.5 py-1.5 border-r border-slate-300 sticky-left-shadow min-w-[200px] sm:min-w-[230px]">
+              <div class="text-xs font-semibold text-slate-800 truncate">${escapeHtml(st.name) || `<span class="text-slate-300 italic">Estudiante ${idx + 1}</span>`}</div>
+            </td>
+            ${cellsHtml}
+            <td id="att-sum-${st.uid}" class="sticky right-0 z-10 ${stickyBg} px-3 py-1.5 border-l border-slate-300 sticky-right-shadow min-w-[225px]">
+              <div class="flex flex-col gap-1">
+                <div class="flex items-center justify-between text-[10px] font-bold">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-emerald-700">A:${att.countA}</span>
+                    <span class="text-violet-700">T:${att.countT}</span>
+                    <span class="text-amber-700">L:${att.countL}</span>
+                    <span class="text-rose-700">F:${att.countF}</span>
+                  </div>
+                  <span class="text-xs font-black text-slate-900">${att.pct}% <span class="text-[10px] text-purple-700">(SER:${att.ser1Scale10 !== '' ? att.ser1Scale10 : '—'})</span></span>
+                </div>
+                <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full ${barColor} transition-all duration-200" style="width: ${att.pct}%"></div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-xs sm:text-sm font-extrabold">📅 Control de Asistencia (${weekCount} Semanas × 3 Sesiones) — ${TRIM_NAMES[trimKey]} (${escapeHtml(app.currentCourse)})</h2>
+              <p class="text-[11px] text-slate-300">Haz clic en cada casilla para alternar <b>A</b> (Puntual), <b>T</b> (Tarde &gt;10 min), <b>L</b> (Licencia) o <b>F</b> (Falta). Traduce automáticamente al <b>1–10 en la Columna 1 del SER</b>.</p>
+            </div>
+          </div>
+
+          <div class="sheet-scroll overflow-x-auto max-h-[70vh]">
+            <table class="w-full border-collapse text-left">
+              <thead class="sticky top-0 z-20 select-none">
+                <tr class="border-b border-slate-300">
+                  <th rowspan="3" class="sticky left-0 z-30 bg-slate-100 w-10 min-w-[40px] px-2 py-2 text-center text-xs font-extrabold text-slate-500 border-r border-slate-200">#</th>
+                  <th rowspan="3" class="sticky left-[40px] z-30 bg-slate-100 min-w-[200px] sm:min-w-[230px] px-3 py-2 text-left text-xs font-extrabold text-slate-800 border-r border-slate-300 sticky-left-shadow">Nombre del Estudiante</th>
+                  ${row1Weeks}
+                  <th rowspan="3" class="sticky right-0 z-30 bg-slate-900 text-white min-w-[225px] px-3 py-2 text-left text-xs font-extrabold border-l border-slate-300 sticky-right-shadow">Asistencia · % y SER</th>
+                </tr>
+                <tr class="border-b border-slate-200">
+                  ${row2Dates}
+                </tr>
+                <tr class="border-b border-slate-300">
+                  ${row3Sessions}
+                </tr>
+              </thead>
+              <tbody>${bodyRows}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * VISTA 4: CONSOLIDADO DE NOTAS ANUALES (Adaptativa iPhone Tarjetas / iPad-Laptop Tabla)
+     */
+    function renderAnnualGradesView() {
+      const filtered = getFilteredStudents();
+
+      if (isMobileCardLayout()) {
+        const cards = filtered.map(({ st, idx }) => {
+          const g1 = calculateStudentTrimesterGrades(app.courseData.trimesters.t1, st.uid);
+          const g2 = calculateStudentTrimesterGrades(app.courseData.trimesters.t2, st.uid);
+          const g3 = calculateStudentTrimesterGrades(app.courseData.trimesters.t3, st.uid);
+
+          const sum300 = (g1.hasAnyData ? g1.finalScore : 0) + (g2.hasAnyData ? g2.finalScore : 0) + (g3.hasAnyData ? g3.finalScore : 0);
+          const evalTrims = (g1.hasAnyData ? 1 : 0) + (g2.hasAnyData ? 1 : 0) + (g3.hasAnyData ? 1 : 0);
+          const annualFinal100 = evalTrims > 0 ? Math.round(sum300 / 3) : 0;
+          const approved = evalTrims > 0 && annualFinal100 >= 51;
+
+          const attTrims = [g1, g2, g3].filter(x => x.attMarked > 0);
+          const annualAttPct = attTrims.length > 0
+            ? Math.round(attTrims.reduce((acc, x) => acc + x.attPct, 0) / attTrims.length)
+            : 0;
+
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-xs space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="min-w-0">
+                  <span class="text-xs font-extrabold text-slate-400">#${idx + 1}</span>
+                  <span class="text-sm font-extrabold text-slate-900 ml-1">${escapeHtml(st.name) || `Estudiante ${idx + 1}`}</span>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 ${
+                  evalTrims === 0
+                    ? 'bg-slate-100 text-slate-400'
+                    : approved
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-rose-100 text-rose-800 border border-rose-300'
+                }">
+                  ${evalTrims === 0 ? 'SIN DATOS' : approved ? 'APROBADO' : 'REPROBADO'}
+                </span>
+              </div>
+
+              <div class="grid grid-cols-4 gap-1.5 text-center">
+                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
+                  <div class="text-[10px] font-bold text-slate-500">1° Trim</div>
+                  <div class="text-xs font-black text-slate-900">${g1.hasAnyData ? g1.finalScore : '—'}</div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
+                  <div class="text-[10px] font-bold text-slate-500">2° Trim</div>
+                  <div class="text-xs font-black text-slate-900">${g2.hasAnyData ? g2.finalScore : '—'}</div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
+                  <div class="text-[10px] font-bold text-slate-500">3° Trim</div>
+                  <div class="text-xs font-black text-slate-900">${g3.hasAnyData ? g3.finalScore : '—'}</div>
+                </div>
+                <div class="bg-emerald-50 rounded-xl p-2 border border-emerald-300">
+                  <div class="text-[10px] font-extrabold text-emerald-900">ANUAL</div>
+                  <div class="text-sm font-black ${evalTrims === 0 ? 'text-slate-400' : approved ? 'text-emerald-700' : 'text-rose-600'}">
+                    ${evalTrims > 0 ? annualFinal100 : '—'}
+                  </div>
+                </div>
+              </div>
+              <div class="text-[11px] text-slate-500 flex justify-end">
+                <span>Asistencia Anual: ${attTrims.length > 0 ? `${annualAttPct}%` : '—'}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="space-y-3">
+            <div class="bg-slate-900 text-white rounded-2xl px-4 py-3">
+              <h2 class="text-sm font-extrabold">🏆 Notas Anuales — ${escapeHtml(app.currentSubject)} (${escapeHtml(app.currentCourse)})</h2>
+              <p class="text-[11px] text-slate-300 mt-0.5">Promedio redondeado de los 3 trimestres sobre 100 pts (Mín. 51).</p>
+            </div>
+            <div class="space-y-2.5">${cards}</div>
+          </div>
+        `;
+      }
+
+      const rowsHtml = filtered.map(({ st, idx }) => {
+        const g1 = calculateStudentTrimesterGrades(app.courseData.trimesters.t1, st.uid);
+        const g2 = calculateStudentTrimesterGrades(app.courseData.trimesters.t2, st.uid);
+        const g3 = calculateStudentTrimesterGrades(app.courseData.trimesters.t3, st.uid);
+
+        const sum300 = (g1.hasAnyData ? g1.finalScore : 0) + (g2.hasAnyData ? g2.finalScore : 0) + (g3.hasAnyData ? g3.finalScore : 0);
+        const evalTrims = (g1.hasAnyData ? 1 : 0) + (g2.hasAnyData ? 1 : 0) + (g3.hasAnyData ? 1 : 0);
+
+        const annualFinal100 = evalTrims > 0 ? Math.round(sum300 / 3) : 0;
+
+        const attTrims = [g1, g2, g3].filter(x => x.attMarked > 0);
+        const annualAttPct = attTrims.length > 0
+          ? Math.round(attTrims.reduce((acc, x) => acc + x.attPct, 0) / attTrims.length)
+          : 0;
+
+        const approved = evalTrims > 0 && annualFinal100 >= 51;
+        const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+
+        return `
+          <tr class="${rowBg} border-b border-slate-200 hover:bg-blue-50/30">
+            <td class="px-3 py-2 text-center text-xs font-bold text-slate-400 border-r border-slate-200">${idx + 1}</td>
+            <td class="px-3 py-2 text-xs font-bold text-slate-800 border-r border-slate-300">
+              ${escapeHtml(st.name) || `<span class="text-slate-300 italic">Estudiante ${idx + 1}</span>`}
+            </td>
+            <td class="px-3 py-2 text-center text-xs font-bold border-r border-slate-200 ${g1.hasAnyData ? (g1.approved ? 'text-emerald-700' : 'text-rose-600') : 'text-slate-300'}">
+              ${g1.hasAnyData ? g1.finalScore : '—'}
+            </td>
+            <td class="px-3 py-2 text-center text-xs font-bold border-r border-slate-200 ${g2.hasAnyData ? (g2.approved ? 'text-emerald-700' : 'text-rose-600') : 'text-slate-300'}">
+              ${g2.hasAnyData ? g2.finalScore : '—'}
+            </td>
+            <td class="px-3 py-2 text-center text-xs font-bold border-r border-slate-300 ${g3.hasAnyData ? (g3.approved ? 'text-emerald-700' : 'text-rose-600') : 'text-slate-300'}">
+              ${g3.hasAnyData ? g3.finalScore : '—'}
+            </td>
+            <td class="px-3 py-2 text-center text-sm font-black border-r border-slate-300 bg-emerald-50/40 ${
+              evalTrims === 0 ? 'text-slate-400' : approved ? 'text-emerald-700' : 'text-rose-600'
+            }">
+              ${evalTrims > 0 ? `${annualFinal100} / 100` : '—'}
+            </td>
+            <td class="px-3 py-2 text-center text-xs font-bold text-slate-700 border-r border-slate-200">
+              ${attTrims.length > 0 ? `${annualAttPct}%` : '—'}
+            </td>
+            <td class="px-3 py-2 text-center">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                evalTrims === 0
+                  ? 'bg-slate-100 text-slate-400'
+                  : approved
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-rose-100 text-rose-800 border border-rose-300'
+              }">
+                ${evalTrims === 0 ? 'SIN DATOS' : approved ? 'APROBADO' : 'REPROBADO'}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="bg-slate-900 text-white px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-sm font-extrabold">🏆 Consolidado Final Anual — ${escapeHtml(app.currentSubject)} (${escapeHtml(app.currentCourse)})</h2>
+              <p class="text-[11px] text-slate-300">Nota Anual = Promedio redondeado de los 3 trimestres sobre 100 puntos (Nota mínima de aprobación anual: 51 puntos).</p>
+            </div>
+          </div>
+
+          <div class="sheet-scroll overflow-x-auto">
+            <table class="w-full border-collapse text-left">
+              <thead>
+                <tr class="bg-slate-100 border-b border-slate-300 text-[10px] font-extrabold uppercase text-slate-700">
+                  <th class="px-3 py-2.5 text-center w-12 border-r border-slate-200">#</th>
+                  <th class="px-3 py-2.5 min-w-[220px] border-r border-slate-300">Estudiante</th>
+                  <th class="px-3 py-2.5 text-center border-r border-slate-200">1° Trim.<br><span class="text-[9px] text-slate-500">/100</span></th>
+                  <th class="px-3 py-2.5 text-center border-r border-slate-200">2° Trim.<br><span class="text-[9px] text-slate-500">/100</span></th>
+                  <th class="px-3 py-2.5 text-center border-r border-slate-300">3° Trim.<br><span class="text-[9px] text-slate-500">/100</span></th>
+                  <th class="px-3 py-2.5 text-center bg-emerald-100 text-emerald-950 border-r border-slate-300">NOTA ANUAL<br><span class="text-[9px]">/100 pts</span></th>
+                  <th class="px-3 py-2.5 text-center border-r border-slate-200">Asistencia<br><span class="text-[9px] text-slate-500">Anual</span></th>
+                  <th class="px-3 py-2.5 text-center">Estado Final</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * ============================================================================
+     * EVENTOS DE EDICIÓN: NÓMINA, SEMANAS, FECHAS, EXÁMENES, ACTIVIDADES Y NOTAS
+     * ============================================================================
+     */
+    function updateStudentName(idx, value) {
+      if (!app.courseData.students[idx]) return;
+      app.courseData.students[idx].name = value;
+      saveCourseToDB();
+    }
+
+    function updateStudentPhone(idx, value) {
+      if (!app.courseData.students[idx]) return;
+      app.courseData.students[idx].parentPhone = value;
+      saveCourseToDB();
+    }
+
+    function handleRosterPaste(event, startIdx) {
+      const text = (event.clipboardData || window.clipboardData).getData('text');
+      if (!text || !text.includes('\n')) return;
+      event.preventDefault();
+
+      const lines = text
+        .split(/\r?\n/)
+        .map(l => l.split('\t'))
+        .filter(cols => (cols[0] || '').trim().length > 0);
+
+      lines.forEach((cols, offset) => {
+        const name = (cols[0] || '').trim();
+        const phone = (cols[1] || '').trim();
+        const targetIdx = startIdx + offset;
+        if (targetIdx >= app.courseData.students.length) {
+          const newUid = generateUid();
+          app.courseData.students.push({ uid: newUid, name, parentPhone: phone, status: 'Activo' });
+          ['t1', 't2', 't3'].forEach(tk => ensureStudentTrimRecords(app.courseData.trimesters[tk], newUid));
+        } else {
+          app.courseData.students[targetIdx].name = name;
+          if (phone) app.courseData.students[targetIdx].parentPhone = phone;
+        }
+      });
+
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+      showToast(`${lines.length} registros pegados correctamente`);
+    }
+
+    function addStudentAtEnd() {
+      const newUid = generateUid();
+      app.courseData.students.push({ uid: newUid, name: '', parentPhone: '', status: 'Activo' });
+      ['t1', 't2', 't3'].forEach(tk => ensureStudentTrimRecords(app.courseData.trimesters[tk], newUid));
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+      showToast('Fila de estudiante añadida al final');
+    }
+
+    function insertStudentBelow(idx) {
+      const newUid = generateUid();
+      app.courseData.students.splice(idx + 1, 0, { uid: newUid, name: '', parentPhone: '', status: 'Activo' });
+      ['t1', 't2', 't3'].forEach(tk => ensureStudentTrimRecords(app.courseData.trimesters[tk], newUid));
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+      showToast(`Nuevo estudiante insertado en la fila #${idx + 2} sin alterar notas`);
+    }
+
+    function removeStudentAt(idx) {
+      if (app.courseData.students.length <= 1) return;
+      app.courseData.students.splice(idx, 1);
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+      showToast('Estudiante eliminado de la nómina', 'info');
+    }
+
+    function toggleStudentStatus(idx) {
+      const st = app.courseData.students[idx];
+      if (!st) return;
+      st.status = st.status === 'Retirado' ? 'Activo' : 'Retirado';
+      saveCourseToDB();
+      renderActiveSheet();
+    }
+
+    function sortStudentsAlphabetically() {
+      const named = app.courseData.students.filter(s => s.name.trim() !== '');
+      const empty = app.courseData.students.filter(s => s.name.trim() === '');
+      named.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+      app.courseData.students = [...named, ...empty];
+      saveCourseToDB();
+      renderActiveSheet();
+      showToast('Lista ordenada alfabéticamente (A–Z) conservando todas las notas');
+    }
+
+    async function syncRosterFromLiteratura() {
+      const litData = await loadCourseFromDB('Literatura', app.currentCourse);
+      if (!litData || !litData.students) return;
+
+      app.courseData.students = litData.students.map(s => ({
+        uid: s.uid,
+        name: s.name,
+        parentPhone: s.parentPhone || '',
+        status: s.status || 'Activo'
+      }));
+      normalizeCourseData(app.courseData);
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+      showToast(`Lista y celulares sincronizados desde Literatura (${app.currentCourse})`);
+    }
+
+    function selectMobileSession(val) {
+      app.mobileAttSession = parseInt(val, 10) || 0;
+      renderActiveSheet();
+    }
+
+    function stepMobileSession(delta, totalSessions) {
+      app.mobileAttSession = (app.mobileAttSession + delta + totalSessions) % totalSessions;
+      renderActiveSheet();
+    }
+
+    function updateTrimesterDates() {
+      const trimKey = getActiveTrimKey();
+      if (!trimKey) return;
+      app.courseData.trimesters[trimKey].dateStart = document.getElementById('trimStartInput').value;
+      app.courseData.trimesters[trimKey].dateEnd = document.getElementById('trimEndInput').value;
+      saveCourseToDB();
+    }
+
+    function changeExamCount(delta) {
+      const trimKey = getActiveTrimKey();
+      if (!trimKey) return;
+      const tData = app.courseData.trimesters[trimKey];
+      tData.examCount = Math.min(MAX_EXAMS, Math.max(1, tData.examCount + delta));
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+    }
+
+    function setExamCount(count) {
+      const trimKey = getActiveTrimKey();
+      if (!trimKey) return;
+      app.courseData.trimesters[trimKey].examCount = Math.min(MAX_EXAMS, Math.max(1, count));
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+    }
+
+    function changeTaskCount(delta) {
+      const trimKey = getActiveTrimKey();
+      if (!trimKey) return;
+      const tData = app.courseData.trimesters[trimKey];
+      tData.taskCount = Math.min(MAX_TASKS, Math.max(1, tData.taskCount + delta));
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+    }
+
+    function setTaskCount(count) {
+      const trimKey = getActiveTrimKey();
+      if (!trimKey) return;
+      app.courseData.trimesters[trimKey].taskCount = Math.min(MAX_TASKS, Math.max(1, count));
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+    }
+
+    function changeWeekCount(delta) {
+      const trimKey = getActiveTrimKey();
+      if (!trimKey) return;
+      const tData = app.courseData.trimesters[trimKey];
+      const nextCount = Math.min(MAX_WEEKS, Math.max(MIN_WEEKS, (tData.weekCount || DEFAULT_WEEKS) + delta));
+      if (nextCount === tData.weekCount) return;
+      tData.weekCount = nextCount;
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+      showToast(`Trimestre ajustado a ${nextCount} semanas (${nextCount * 3} sesiones)`, 'info');
+    }
+
+    function updateSessionDate(trimKey, colIdx, val) {
+      const tData = app.courseData.trimesters[trimKey];
+      if (!tData) return;
+      tData.sessionDates[colIdx] = val;
+      saveCourseToDB();
+    }
+
+    function updateSerLabel(trimKey, sIdx, val) {
+      app.courseData.trimesters[trimKey].serLabels[sIdx] = val;
+      saveCourseToDB();
+    }
+
+    function updateExamLabel(trimKey, eIdx, val) {
+      app.courseData.trimesters[trimKey].examLabels[eIdx] = val;
+      saveCourseToDB();
+    }
+
+    function updateTaskLabel(trimKey, kIdx, val) {
+      app.courseData.trimesters[trimKey].taskLabels[kIdx] = val;
+      saveCourseToDB();
+    }
+
+    // Actualización de Notas redondeadas a enteros
+    function updateSerGrade(trimKey, uid, sIdx, rawVal) {
+      const tData = app.courseData.trimesters[trimKey];
+      ensureStudentTrimRecords(tData, uid);
+      const g = tData.gradesByUid[uid];
+      if (rawVal === '') {
+        g.ser[sIdx] = '';
+        if (sIdx === 0 || sIdx === 1 || sIdx === 2) g.serManualOverride[sIdx] = false;
+      } else {
+        const clamped = Math.round(Math.min(10, Math.max(0, parseFloat(rawVal))));
+        g.ser[sIdx] = isNaN(clamped) ? '' : clamped;
+        if (sIdx === 0 || sIdx === 1 || sIdx === 2) g.serManualOverride[sIdx] = true;
+      }
+      saveCourseToDB();
+      refreshStudentGradeRowUI(trimKey, uid);
+    }
+
+    function updateExamGrade(trimKey, uid, eIdx, rawVal) {
+      const tData = app.courseData.trimesters[trimKey];
+      ensureStudentTrimRecords(tData, uid);
+      const g = tData.gradesByUid[uid];
+      if (rawVal === '') {
+        g.exams[eIdx] = '';
+      } else {
+        const clamped = Math.round(Math.min(45, Math.max(0, parseFloat(rawVal))));
+        g.exams[eIdx] = isNaN(clamped) ? '' : clamped;
+      }
+      saveCourseToDB();
+      refreshStudentGradeRowUI(trimKey, uid);
+    }
+
+    function updateTaskGrade(trimKey, uid, kIdx, rawVal) {
+      const tData = app.courseData.trimesters[trimKey];
+      ensureStudentTrimRecords(tData, uid);
+      const g = tData.gradesByUid[uid];
+      if (rawVal === '') {
+        g.tasks[kIdx] = '';
+      } else {
+        const clamped = Math.round(Math.min(40, Math.max(0, parseFloat(rawVal))));
+        g.tasks[kIdx] = isNaN(clamped) ? '' : clamped;
+      }
+      saveCourseToDB();
+      refreshStudentGradeRowUI(trimKey, uid);
+    }
+
+    function updateAutoEvalGrade(trimKey, uid, rawVal) {
+      const tData = app.courseData.trimesters[trimKey];
+      ensureStudentTrimRecords(tData, uid);
+      const g = tData.gradesByUid[uid];
+      if (rawVal === '') {
+        g.autoEval = '';
+      } else {
+        const clamped = Math.round(Math.min(5, Math.max(0, parseFloat(rawVal))));
+        g.autoEval = isNaN(clamped) ? '' : clamped;
+      }
+      saveCourseToDB();
+      refreshStudentGradeRowUI(trimKey, uid);
+    }
+
+    function cycleTaskFromParentTable(trimKey, uid, kIdx) {
+      const tData = app.courseData.trimesters[trimKey];
+      ensureStudentTrimRecords(tData, uid);
+      const g = tData.gradesByUid[uid];
+      const cur = g.tasks[kIdx];
+      let next = 40;
+      if (cur === '' || cur === null || cur === undefined) next = 40;
+      else if (Number(cur) >= 35) next = 25;
+      else if (Number(cur) >= 15) next = 10;
+      else if (Number(cur) >= 1) next = 0;
+      else next = '';
+
+      g.tasks[kIdx] = next;
+      saveCourseToDB();
+      renderActiveSheet();
+    }
+
+    function refreshStudentGradeRowUI(trimKey, uid) {
+      const tData = app.courseData.trimesters[trimKey];
+      const calc = calculateStudentTrimesterGrades(tData, uid);
+
+      const serPromEl = document.getElementById(`ser-prom-${uid}`);
+      const saberPromEl = document.getElementById(`saber-prom-${uid}`);
+      const hacerPromEl = document.getElementById(`hacer-prom-${uid}`);
+      const finalCellEl = document.getElementById(`final-cell-${uid}`);
+
+      if (serPromEl) serPromEl.textContent = calc.serScore;
+      if (saberPromEl) saberPromEl.textContent = calc.saberScore;
+      if (hacerPromEl) hacerPromEl.textContent = calc.hacerScore;
+
+      const g = tData.gradesByUid[uid];
+      const rowEl = document.getElementById(`grade-row-${uid}`);
+      if (rowEl) {
+        const serInputs = rowEl.querySelectorAll('input[type="number"]');
+        if (!g.serManualOverride[1] && serInputs[1] && document.activeElement !== serInputs[1]) {
+          serInputs[1].value = calc.serEffectiveValues[1] !== '' ? calc.serEffectiveValues[1] : '';
+        }
+        if (!g.serManualOverride[2] && serInputs[2] && document.activeElement !== serInputs[2]) {
+          serInputs[2].value = calc.serEffectiveValues[2] !== '' ? calc.serEffectiveValues[2] : '';
+        }
+      }
+
+      if (finalCellEl) {
+        const finalColor = !calc.hasAnyData
+          ? 'text-slate-400'
+          : calc.approved
+            ? 'text-emerald-700'
+            : 'text-rose-600';
+        finalCellEl.innerHTML = `
+          <div class="flex items-center justify-center gap-1.5">
+            <span class="text-sm font-black ${finalColor}">${calc.finalScore}</span>
+            <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded ${calc.levelBadge}">${calc.level}</span>
+          </div>
+        `;
+      }
+
+      const parentRowEl = document.getElementById(`parent-row-${uid}`);
+      if (parentRowEl) {
+        const idx = app.courseData.students.findIndex(s => s.uid === uid);
+        const st = app.courseData.students[idx];
+        if (st) {
+          const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+          const stickyBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+          const waUrl = formatWhatsAppUrl(st.parentPhone);
+          let cntS = 0, cntI = 0, cntT = 0, cntN = 0;
+
+          const taskBadges = Array.from({ length: tData.taskCount }, (_, kIdx) => {
+            const info = getTaskParentCode(g.tasks[kIdx]);
+            if (info.code === 'S') cntS++;
+            else if (info.code === 'I') cntI++;
+            else if (info.code === 'T') cntT++;
+            else if (info.code === 'N') cntN++;
+            return `
+              <td class="border-r border-slate-200 p-1 text-center">
+                <button
+                  type="button"
+                  onclick="cycleTaskFromParentTable('${trimKey}', '${st.uid}', ${kIdx})"
+                  title="${info.label}"
+                  class="tap-btn w-7 h-7 rounded-lg border text-xs inline-flex items-center justify-center cursor-pointer ${info.cls}"
+                >${info.code}</button>
+              </td>
+            `;
+          }).join('');
+
+          const examBadges = Array.from({ length: tData.examCount }, (_, eIdx) => {
+            const badge = getExamParentBadge(g.exams[eIdx]);
+            return `
+              <td class="border-r border-slate-200 p-1 text-center">
+                <span class="inline-block px-2 py-0.5 rounded-md border text-[10px] tracking-tight ${badge.cls}">${badge.text}</span>
+              </td>
+            `;
+          }).join('');
+
+          parentRowEl.className = `${rowBg} border-b border-slate-200`;
+          parentRowEl.innerHTML = `
+            <td class="sticky left-0 z-10 ${stickyBg} px-2 py-1.5 text-center text-xs font-bold text-slate-400 border-r border-slate-200">${idx + 1}</td>
+            <td class="sticky left-[40px] z-10 ${stickyBg} px-2.5 py-1.5 border-r border-slate-300 sticky-left-shadow min-w-[200px]">
+              <div class="flex items-center justify-between gap-1.5">
+                <span class="text-xs font-semibold text-slate-800 truncate">${escapeHtml(st.name) || `<span class="text-slate-300 italic">Estudiante ${idx + 1}</span>`}</span>
+                ${waUrl ? `<a href="${waUrl}" target="_blank" rel="noopener noreferrer" title="WhatsApp Padre/Tutor (${escapeHtml(st.parentPhone)})" class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">💬</a>` : ''}
+              </div>
+            </td>
+            ${taskBadges}
+            <td class="bg-slate-100 border-r border-slate-300 px-2 py-1 text-center text-[10px] font-bold whitespace-nowrap">
+              <span class="text-emerald-700">S:${cntS}</span> ·
+              <span class="text-amber-700">I:${cntI}</span> ·
+              <span class="text-violet-700">T:${cntT}</span> ·
+              <span class="text-rose-700">N:${cntN}</span>
+            </td>
+            ${examBadges}
+          `;
+        }
+      }
+    }
+
+    // Eventos de Asistencia
+    function toggleAttendanceCell(trimKey, uid, colIdx) {
+      const tData = app.courseData.trimesters[trimKey];
+      ensureStudentTrimRecords(tData, uid);
+      const arr = tData.attendanceByUid[uid];
+      const cur = arr[colIdx];
+      const next = ATT_STATES[(ATT_STATES.indexOf(cur) + 1) % ATT_STATES.length];
+      arr[colIdx] = next;
+      saveCourseToDB();
+
+      const btn = document.getElementById(`att-btn-${uid}-${colIdx}`);
+      const mobileMode = isMobileCardLayout();
+      if (btn) {
+        if (mobileMode) {
+          let btnCls = 'bg-slate-100 text-slate-500 border-slate-300';
+          let lbl = 'Sin marcar';
+          if (next === 'A') {
+            btnCls = 'bg-emerald-500 text-white border-emerald-600 font-extrabold';
+            lbl = 'A · Puntual';
+          } else if (next === 'T') {
+            btnCls = 'bg-violet-600 text-white border-violet-700 font-extrabold';
+            lbl = 'T · Tarde';
+          } else if (next === 'L') {
+            btnCls = 'bg-amber-400 text-slate-950 border-amber-500 font-extrabold';
+            lbl = 'L · Licencia';
+          } else if (next === 'F') {
+            btnCls = 'bg-rose-500 text-white border-rose-600 font-extrabold';
+            lbl = 'F · Falta';
+          }
+          btn.textContent = lbl;
+          btn.className = `tap-btn px-3 py-2.5 rounded-xl border text-xs min-w-[104px] text-center shrink-0 cursor-pointer ${btnCls}`;
+        } else {
+          let btnCls = 'bg-slate-50 text-slate-300 border-slate-200 hover:border-emerald-400';
+          let lbl = '·';
+          if (next === 'A') {
+            btnCls = 'bg-emerald-500 text-white border-emerald-600 font-extrabold';
+            lbl = 'A';
+          } else if (next === 'T') {
+            btnCls = 'bg-violet-600 text-white border-violet-700 font-extrabold';
+            lbl = 'T';
+          } else if (next === 'L') {
+            btnCls = 'bg-amber-400 text-slate-950 border-amber-500 font-extrabold';
+            lbl = 'L';
+          } else if (next === 'F') {
+            btnCls = 'bg-rose-500 text-white border-rose-600 font-extrabold';
+            lbl = 'F';
+          }
+          btn.textContent = lbl;
+          btn.className = `tap-btn w-7 h-7 rounded-lg border text-xs inline-flex items-center justify-center cursor-pointer ${btnCls}`;
+        }
+      }
+
+      const att = calculateAttendanceStats(tData, uid);
+      const sumEl = document.getElementById(`att-sum-${uid}`);
+      if (sumEl) {
+        if (mobileMode) {
+          sumEl.innerHTML = `
+            <span class="text-emerald-700">A:${att.countA}</span> ·
+            <span class="text-violet-700">T:${att.countT}</span> ·
+            <span class="text-amber-700">L:${att.countL}</span> ·
+            <span class="text-rose-700">F:${att.countF}</span> ·
+            <strong class="text-slate-900">${att.pct}%</strong>
+            <span class="text-purple-700">(SER:${att.ser1Scale10 !== '' ? att.ser1Scale10 : '—'})</span>
+          `;
+        } else {
+          const barColor = att.marked === 0
+            ? 'bg-slate-300'
+            : att.pct >= 80
+              ? 'bg-emerald-500'
+              : att.pct >= 60
+                ? 'bg-amber-500'
+                : 'bg-rose-500';
+          sumEl.innerHTML = `
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center justify-between text-[10px] font-bold">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-emerald-700">A:${att.countA}</span>
+                  <span class="text-violet-700">T:${att.countT}</span>
+                  <span class="text-amber-700">L:${att.countL}</span>
+                  <span class="text-rose-700">F:${att.countF}</span>
+                </div>
+                <span class="text-xs font-black text-slate-900">${att.pct}% <span class="text-[10px] text-purple-700">(SER:${att.ser1Scale10 !== '' ? att.ser1Scale10 : '—'})</span></span>
+              </div>
+              <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div class="h-full ${barColor} transition-all duration-200" style="width: ${att.pct}%"></div>
+              </div>
+            </div>
+          `;
+        }
+      }
+    }
+
+    function fillSessionPresent(trimKey, colIdx) {
+      const tData = app.courseData.trimesters[trimKey];
+      const named = app.courseData.students.filter(s => s.name.trim() !== '');
+      const applyAll = named.length === 0;
+
+      app.courseData.students.forEach(st => {
+        if (applyAll || st.name.trim() !== '') {
+          ensureStudentTrimRecords(tData, st.uid);
+          tData.attendanceByUid[st.uid][colIdx] = 'A';
+        }
+      });
+
+      saveCourseToDB();
+      renderActiveSheet();
+      const w = Math.floor(colIdx / SESSIONS_PER_WEEK) + 1;
+      const s = (colIdx % SESSIONS_PER_WEEK) + 1;
+      showToast(`Asistencia (A) marcada en Semana ${w} · Sesión ${s}`);
+    }
+
+    /**
+     * ============================================================================
+     * DATOS DE EJEMPLO PARA PROBAR AL INSTANTE
+     * ============================================================================
+     */
+    function loadDemoData() {
+      const sampleStudents = [
+        { name: 'Aguilar Mamani, Mateo', phone: '71045821' },
+        { name: 'Benítez Rojas, Sofía', phone: '76392014' },
+        { name: 'Cáceres Vargas, Sebastián', phone: '69028471' },
+        { name: 'Delgado Chávez, Valentina', phone: '72184930' },
+        { name: 'Espinoza Quispe, Nicolás', phone: '78512094' },
+        { name: 'Fernández Flores, Camila', phone: '67839102' },
+        { name: 'Gutiérrez Mendoza, Santiago', phone: '70948215' },
+        { name: 'Herrera Salazar, Luciana', phone: '75619384' }
+      ];
+
+      sampleStudents.forEach((item, i) => {
+        if (app.courseData.students[i]) {
+          app.courseData.students[i].name = item.name;
+          app.courseData.students[i].parentPhone = item.phone;
+        }
+      });
+
+      const t1 = app.courseData.trimesters.t1;
+      t1.sessionDates[0] = '03 feb';
+      t1.sessionDates[1] = '05 feb';
+      t1.sessionDates[2] = '07 feb';
+      t1.sessionDates[3] = '10 feb';
+      t1.sessionDates[4] = '12 feb';
+      t1.sessionDates[5] = '14 feb';
+
+      sampleStudents.forEach((_, idx) => {
+        const uid = app.courseData.students[idx].uid;
+        ensureStudentTrimRecords(t1, uid);
+        const g = t1.gradesByUid[uid];
+        const att = t1.attendanceByUid[uid];
+
+        for (let c = 0; c < 6; c++) {
+          if (idx === 2 && c === 3) att[c] = 'T';
+          else if (idx === 5 && (c === 2 || c === 4 || c === 5)) att[c] = 'F';
+          else if (idx === 1 && c === 1) att[c] = 'L';
+          else att[c] = 'A';
+        }
+
+        g.ser[3] = idx === 5 ? 7 : 10;
+        g.exams[0] = idx === 5 ? 20 : idx === 2 ? 34 : 42;
+        g.exams[1] = idx === 5 ? 18 : idx === 2 ? 31 : 40;
+        g.tasks[0] = 40;
+        g.tasks[1] = idx === 2 ? 25 : 40;
+        g.tasks[2] = idx === 5 ? 0 : idx === 2 ? 10 : 40;
+        g.autoEval = idx === 5 ? 3 : 5;
+      });
+
+      saveCourseToDB();
+      renderTopControls();
+      renderActiveSheet();
+      showToast('Datos de demostración cargados en el curso actual');
+    }
+
+    /**
+     * ============================================================================
+     * IMPRESIÓN / PDF Y EXPORTACIÓN A GOOGLE SHEETS / EXCEL
+     * ============================================================================
+     */
+    function openPrintModal() {
+      const m = document.getElementById('printModal');
+      const instSpan = document.getElementById('printModalInstName');
+      if (instSpan) instSpan.textContent = app.institution || DEFAULT_INSTITUTION;
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closePrintModal() {
+      const m = document.getElementById('printModal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    function executePrint(mode) {
+      closePrintModal();
+      const instName = app.institution || DEFAULT_INSTITUTION;
+      document.getElementById('printInstTitle').textContent = instName.toUpperCase();
+      document.getElementById('printFooterInst').textContent = instName;
+      document.getElementById('printCourseInfo').textContent = `Materia: ${app.currentSubject} · Curso: ${app.currentCourse}`;
+      document.getElementById('printFooterDate').textContent = new Date().toLocaleDateString('es-BO');
+
+      if (mode === 'current') {
+        setTimeout(() => window.print(), 150);
+      } else {
+        const main = document.getElementById('mainWorkspace');
+        const originalHtml = main.innerHTML;
+        const prevView = app.viewMode;
+        app.viewMode = 'table';
+        main.innerHTML = `
+          <div class="space-y-6">
+            ${renderNominaView()}
+            <div class="print-page-break">${renderTrimesterGradesView('t1')}</div>
+            <div class="print-page-break">${renderTrimesterGradesView('t2')}</div>
+            <div class="print-page-break">${renderTrimesterGradesView('t3')}</div>
+            <div class="print-page-break">${renderAnnualGradesView()}</div>
+          </div>
+        `;
+        setTimeout(() => {
+          window.print();
+          app.viewMode = prevView;
+          main.innerHTML = originalHtml;
+        }, 250);
+      }
+    }
+
+    function openSyncModal() {
+      const m = document.getElementById('syncModal');
+      document.getElementById('syncKeyInput').value = app.syncKey || '';
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeSyncModal() {
+      const m = document.getElementById('syncModal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    function saveSyncKey() {
+      app.syncKey = document.getElementById('syncKeyInput').value.trim();
+      safeStorageSet('horeb_sync_key', app.syncKey);
+      updateSyncStatusBadge('saved');
+      closeSyncModal();
+      showToast(app.syncKey ? `Clave "${app.syncKey}" vinculada` : 'Modo local sin clave');
+    }
+
+    async function exportBackupJSON() {
+      const payload = {
+        institution: app.institution,
+        exportedAt: new Date().toISOString(),
+        courses: memoryStore
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Respaldo_Colegio_Evangelico_Horeb_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Respaldo .json descargado');
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && parsed.courses) {
+            Object.keys(parsed.courses).forEach(k => {
+              memoryStore[k] = parsed.courses[k];
+            });
+            if (parsed.institution) {
+              app.institution = parsed.institution;
+              const instEl = document.getElementById('institutionInput');
+              if (instEl) instEl.value = parsed.institution;
+              document.title = `Cuaderno Pedagógico Digital — ${parsed.institution}`;
+            }
+            app.courseData = await loadCourseFromDB(app.currentSubject, app.currentCourse);
+            saveCourseToDB();
+            renderTopControls();
+            renderActiveSheet();
+            closeSyncModal();
+            showToast('Respaldo restaurado exitosamente');
+          }
+        } catch (_) {
+          showToast('Archivo de respaldo no válido', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    async function exportCourseToXLSX() {
+      if (typeof ExcelJS === 'undefined') {
+        showToast('Descargando respaldo en formato compatible...', 'info');
+        exportBackupJSON();
+        return;
+      }
+
+      try {
+        showToast('Generando libro Excel / Google Sheets...', 'info');
+        const wb = new ExcelJS.Workbook();
+        const instName = app.institution || DEFAULT_INSTITUTION;
+        wb.creator = instName;
+
+        // Hoja 1: Nómina (incluye Celular Padre / Tutor)
+        const wsNom = wb.addWorksheet('Nómina');
+        wsNom.addRow([`${instName} — ${app.currentSubject} (${app.currentCourse})`]);
+        wsNom.addRow(['N°', 'Apellidos y Nombres', 'Celular Padre / Tutor', 'Estado']);
+        app.courseData.students.forEach((st, i) => {
+          wsNom.addRow([i + 1, st.name || '', st.parentPhone || '', st.status || 'Activo']);
+        });
+
+        // Hojas por Trimestre (Notas + Asistencia con semanas dinámicas y fechas)
+        ['t1', 't2', 't3'].forEach((tk, tIdx) => {
+          const tData = app.courseData.trimesters[tk];
+          const wsN = wb.addWorksheet(`${tIdx + 1}° Trim Notas`);
+          const headerN = [
+            'N°', 'Estudiante',
+            ...tData.serLabels, 'Prom. SER (/10)',
+            ...tData.examLabels.slice(0, tData.examCount), 'Prom. SABER (/45)',
+            ...tData.taskLabels.slice(0, tData.taskCount), 'Prom. HACER (/40)',
+            'Autoeval (/5)', 'Nota Final (/100)', 'Nivel'
+          ];
+          wsN.addRow([`${instName} — ${TRIM_NAMES[tk]} · ${app.currentSubject} (${app.currentCourse})`]);
+          wsN.addRow(headerN);
+
+          app.courseData.students.forEach((st, i) => {
+            const c = calculateStudentTrimesterGrades(tData, st.uid);
+            const g = tData.gradesByUid[st.uid];
+            wsN.addRow([
+              i + 1, st.name || '',
+              ...c.serEffectiveValues, c.serScore,
+              ...g.exams.slice(0, tData.examCount), c.saberScore,
+              ...g.tasks.slice(0, tData.taskCount), c.hacerScore,
+              g.autoEval, c.finalScore, c.level
+            ]);
+          });
+
+          const wsA = wb.addWorksheet(`${tIdx + 1}° Trim Asistencia`);
+          const wCount = tData.weekCount || DEFAULT_WEEKS;
+          const totalSes = wCount * SESSIONS_PER_WEEK;
+          const sesHeaders = ['N°', 'Estudiante'];
+          const dateHeaders = ['', 'Fechas de Sesión:'];
+          for (let w = 1; w <= wCount; w++) {
+            for (let s = 1; s <= SESSIONS_PER_WEEK; s++) {
+              const col = (w - 1) * SESSIONS_PER_WEEK + (s - 1);
+              sesHeaders.push(`Sem${w}-S${s}`);
+              dateHeaders.push(tData.sessionDates[col] || '');
+            }
+          }
+          sesHeaders.push('A', 'T', 'L', 'F', '% Asistencia', 'SER Col.1');
+          wsA.addRow([`${instName} — Asistencia ${TRIM_NAMES[tk]} · ${app.currentSubject} (${app.currentCourse})`]);
+          wsA.addRow(dateHeaders);
+          wsA.addRow(sesHeaders);
+
+          app.courseData.students.forEach((st, i) => {
+            const att = calculateAttendanceStats(tData, st.uid);
+            const arr = tData.attendanceByUid[st.uid].slice(0, totalSes);
+            wsA.addRow([
+              i + 1, st.name || '',
+              ...arr,
+              att.countA, att.countT, att.countL, att.countF,
+              `${att.pct}%`, att.ser1Scale10
+            ]);
+          });
+        });
+
+        const buf = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Cuaderno_${app.currentSubject}_${app.currentCourse.replace(/\s+/g, '_')}_Horeb.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Archivo .xlsx descargado con éxito');
+      } catch (err) {
+        console.error(err);
+        showToast('Error al generar Excel', 'error');
+      }
+    }
+
+    /**
+     * ============================================================================
+     * INICIALIZACIÓN SEGURA E INMEDIATA
+     * ============================================================================
+     */
+    async function initApp() {
+      try {
+        const savedInst = safeStorageGet('horeb_institution');
+        if (savedInst && savedInst.trim() !== '' && savedInst !== 'Colegio Horeb') {
+          app.institution = savedInst;
+        } else {
+          app.institution = DEFAULT_INSTITUTION;
+        }
+
+        const instEl = document.getElementById('institutionInput');
+        if (instEl) {
+          instEl.value = app.institution;
+          document.title = `Cuaderno Pedagógico Digital — ${app.institution}`;
+          instEl.addEventListener('input', (e) => {
+            app.institution = e.target.value;
+            document.title = `Cuaderno Pedagógico Digital — ${app.institution || DEFAULT_INSTITUTION}`;
+            saveCourseToDB();
+          });
+        }
+
+        window.addEventListener('online', () => updateSyncStatusBadge('saved'));
+        window.addEventListener('offline', () => updateSyncStatusBadge('saved'));
+
+        let lastMobileState = isMobileCardLayout();
+        window.addEventListener('resize', () => {
+          if (app.viewMode !== 'auto') return;
+          const nowMobile = isMobileCardLayout();
+          if (nowMobile !== lastMobileState) {
+            lastMobileState = nowMobile;
+            renderActiveSheet();
+          }
+        });
+
+        app.courseData = await loadCourseFromDB(app.currentSubject, app.currentCourse);
+        renderTopControls();
+        renderBottomTabs();
+        renderActiveSheet();
+        updateSyncStatusBadge('saved');
+      } catch (err) {
+        console.error('Error iniciando cuaderno:', err);
+        app.courseData = createEmptyCourseData(app.currentSubject, app.currentCourse);
+        renderTopControls();
+        renderBottomTabs();
+        renderActiveSheet();
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>
